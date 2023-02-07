@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block title %}Josh Mcguigan - Blog{% endblock title %}
+
+{% block content %}
+<br>
+<ul class="posts">
+    {% set blog_section = get_section(path="blog/_index.md") %}
+    {% for page in blog_section.pages %}
+    <li class="post">
+        <date>{{ page.date }}</date>
+        <a href="{{ page.permalink | safe }}">
+            <span>{{ page.title }}</span>
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+{% endblock content %}

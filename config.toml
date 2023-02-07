@@ -1,0 +1,7 @@
+base_url = "https://www.joshmcguigan.com"
+
+[markdown]
+highlight_code = true
+highlight_theme = "cheerfully-light"
+
+[extra]
