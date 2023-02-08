@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Minimum Presentable Product - A Precursor to MVP</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Minimum Presentable Product - A Precursor to MVP</h1>
+
+<p class="subtitle">2018-10-25</p>
+
+<p>Last weekend I competed in a Hackathon. At the start of the event, after brainstorming and ultimately choosing an idea, we wrote down a list of features which we felt represented a minimum viable product. Our initial goal was to develop that feature set over the next 36 hours. </p>
+<p>Every few hours we would take some time to evaluate our progress and, perhaps unsurprisingly, each time we were behind schedule and needed to remove features from the todo list for the weekend. After a few rounds of this we realized our mistake. Hackathons are not about building a minimum viable product, they are about demonstrating a concept. The thing we really needed to build and present to the judges was a Minimum Presentable Product. </p>
+<h2 id="like-a-proof-of-concept">Like a proof of concept?</h2>
+<p>Yes! A minimum presentable product isn't enough of a product to be usable in the real world, it is just enough of a product that your earliest users would be able to understand what you are planning to build. It represents the level of completeness you need to make a marketing video which would get your users excited about the potential of the product. </p>
+<h2 id="if-an-mvp-is-already-minimal-what-could-possibly-be-removed-from-it">If an MVP is already minimal, what could possibly be removed from it?</h2>
+<p>Anything that isn't a core or unique part of your product isn't part of the minimum presentable product. At the hackathon, we built an event management system for non-profit organizations. As we demonstrated to the judges, one critical missing feature was the ability for a user to add events. </p>
+<p>How could we possibly demo an event management system that didn't even allow users to add events? Adding events wasn't a unique part of our application. We were primarily focused on organizing volunteers, and it turns out that pre-populating the database with a few events before the demo worked just as well as building a feature to allow users to do it. This allowed our team to spend time building the features that set our product apart, while relying on the imagination of the judges to fill in the parts they've seen many times before. </p>
+<h2 id="takeaway">Takeaway</h2>
+<p>MVP has become a major buzz word in software, and for good reason. I believe in releasing early to get feedback as soon as possible. But if you are fortunate enough to have a group of potential future users who you can demonstrate the product to, you don't have to wait until the MVP is complete to get their feedback. Build a minimum presentable product (MPP), and get that user feedback even sooner!</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>
