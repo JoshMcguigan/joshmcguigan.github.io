@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Blue-Green Deployments and Immutable Infrastructure</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Blue-Green Deployments and Immutable Infrastructure</h1>
+
+<p class="subtitle">2020-01-11</p>
+
+<p>I've blogged in the past about <a href="/blog/run-your-own-dns-servers/">why I'm running my own DNS infrastructure</a>, and <a href="/blog/low-cost-infrastructure-monitoring/">how I monitor those machines</a>. This post rounds out the trilogy with a discussion of how and why I automated the deployment of this infrastructure.</p>
+<h2 id="why-immutable-infrastructure">Why immutable infrastructure?</h2>
+<p>Immutable infrastructure is the idea that once a server is configured and serving production traffic, it will never be re-configured. When you want to roll out an update, rather than mutating the existing server, the idea is to create a new server with the desired configuration to replace the old server.</p>
+<p>Blue-green deploys are a deployment process where you spin up a new server before taking down your old server. Once you've confirmed the new server is healthy, you update your load balancer to point production traffic at the new server. This deployment process allows deploying immutable infrastructure without downtime (which you might otherwise have in the period between the old server shutting down and the new server turning on).</p>
+<p>So now we know what immutable infrastructure is, and how we can deploy it, but what are the benefits?</p>
+<p>My favorite feature of immutable infrastructure is that you can be confident that you are always capable of deploying production infrastructure from scratch. This sounds obvious, but if you setup your servers once and re-configure (mutate) them as your needs change, over time the configuration of these machines will drift. Given enough time (and mutations), it is likely that the configuration would drift to such an extent that you wouldn't immediately know how to re-provision these machines from scratch if that became necessary.</p>
+<p>With immutable infrastructure, any time you want to make a configuration change the entire server is deployed from scratch. The ensures configuration drift cannot happen, and it is always possible to re-provision a failed machine.</p>
+<h2 id="infrastructure-overview">Infrastructure overview</h2>
+<p>Now that we've motivated immutable infrastructure and blue-green deploys, how exactly did I implement it in my personal DNS infrastructure?</p>
+<p>If you read the previous infrastructure posts, you'll know my goal was to host two globally distributed authoritative DNS servers. The machines are hosted on <a href="https://www.linode.com">Linode</a>, and I use BIND as the DNS server.</p>
+<p>BIND is capable of handling configuration changes without dropping traffic, but I wasn't sure how I'd be able to update BIND itself without downtime (much less apply things like kernel updates). This lead to deploying a load balancer (or reverse proxy) in front of each DNS server, which allows for blue-green deploys as described above.</p>
+<p>The load balancers are themselves linux virtual machines, also hosted on Linode, running nginx.</p>
+<h2 id="automated-deployment">Automated deployment</h2>
+<p>All of my machine configuration is <a href="https://github.com/JoshMcguigan/infra/tree/master/ansible">managed with Ansible</a>. But Ansible is really a tool to provision machines, and doesn't provide features for blue-green deployment.</p>
+<p>To fully automate the deploy of nameserver updates, I wrote a <a href="https://github.com/JoshMcguigan/infra/blob/master/scripts/deploy-infra.py">python script</a> which interacts with the Linode API, as well as Ansible.</p>
+<p>Now if I want to update my nameservers I just change the Ansible configuration, then run <code>./scripts/deploy-infra.py</code>, and I can be sure the changes are deployed safely and without downtime.</p>
+<p>An outline of the script behavior follows:</p>
+<ol>
+<li>Create two new virtual machines (ns1-next, ns2-next)</li>
+<li>Provision the new machines with Ansible</li>
+<li>Ensure both machines respond to a DNS request</li>
+<li>Re-configure the load balancers to point to the new DNS servers</li>
+<li>Ensure DNS health checks pass when run against the load balancer public IP addresses</li>
+<li>Delete the old DNS servers</li>
+<li>Rename ns1-next/ns2-next to ns1/ns2</li>
+</ol>
+<h2 id="but-the-load-balancers-are-mutable">But the load balancers are mutable..</h2>
+<p>Yes, unfortunately something has to be mutable. I would have preferred to use a managed load balancer (Linode's managed load balancer doesn't support UDP) or some other network trickery (I did experiment with Linode's IP swap feature) to make this work, but ultimately I found I needed to run my own load balancer to get exactly what I was looking for.</p>
+<p>Although this is not ideal, for me it is acceptable under the assumption that the machines behind the load balancers would change more often and more substantially than the load balancers themselves. Further, nginx can support both configuration changes as well as application updates without downtime.</p>
+<h2 id="blue-green-load-balancer-deploys">Blue-Green load balancer deploys</h2>
+<p>For kernel updates, or any other updates to the load balancers which require a system restart, they still can be re-deployed in a blue-green fashion, but the process will be a bit more involved (and not nearly as fast).</p>
+<p>The process is as follows:</p>
+<ol>
+<li>Deploy new load balancer instances (create machine, run Ansible configuration)</li>
+<li>Ensure new load balancer instances are healthy</li>
+<li>Log into my domain registrar and update DNS configuration to point to the IP addresses of the new load balancers</li>
+<li>Delete the old load balancers once they are no longer receiving traffic (being cautious of long DNS client TTL settings)</li>
+</ol>
+<h2 id="conclusion">Conclusion</h2>
+<p>Is this setup overkill for my current needs? Almost certainly yes. But I've enjoyed building it. And it allows me to have great confidence in my ability to maintain this system, with a high level of uptime, over the long term.</p>
+<p>As of this writing, this is the DNS infrastructure serving requests for this blog. Try it out with a direct request like <code>dig www.joshmcguigan.com @ns1.rhiyo.com</code>, or use <code>dig www.joshmcguigan.com +trace</code> to recursively resolve the domain from the root DNS servers.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>
