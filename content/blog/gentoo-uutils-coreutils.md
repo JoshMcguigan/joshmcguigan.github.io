@@ -38,9 +38,15 @@ I did this by copying the contents of a [uutils coreutils ebuild](https://gitweb
 
 At that point, running `emerge --update sys-apps/coreutils` was enough to replace GNU coreutils with uutils coreutils on my system.
 
-## Problem #1 - uutils extra commands
+## Problem #1 - uutils command prefix
 
-Well actually it wasn't quite as easy as running the update command. Attempting to do that resulted in package manager errors saying that this package was trying to overwrite commands provided by a different package. It turns out that uutils coreutils by default includes some binaries which on Gentoo are installed by packages other than the GNU coreutils package.
+Well actually it wasn't quite as easy as running the update command. The existing uutils coreutils package that I copied the ebuild from was meant to install alongside GNU coreutils, so they prefix all the installed binaries with `uu-`. This is not desirable if we want to use these as our primary coreutils.
+
+The fix here was to patch the ebuild to remove the `uu-` prefix.
+
+## Problem #2 - uutils extra commands
+
+The next attempt to update the coreutils package resulted in file collision errors from Portage. It turns out that uutils coreutils by default includes some binaries which on Gentoo are installed by packages other than the GNU coreutils package.
 
 * `more` is installed by sys-apps/util-linux
 * `hostname` is installed by sys-apps/net-tools
@@ -50,12 +56,6 @@ Well actually it wasn't quite as easy as running the update command. Attempting 
 Fortunately the uutils Makefile allows setting an environment variable to specify any binaries that should be skipped when installing. The fix here was adding `SKIP_UTILS="more hostname kill uptime groups"` to the ebuild.
 
 This was enough to get uutils coreutils installing as an "update" (but really a replacement) to GNU coreutils.
-
-## Problem #2 - uutils command prefix
-
-The existing uutils coreutils package that I copied the ebuild from was meant to install alongside GNU coreutils, so they prefix all the installed binaries with `uu-`. This is not desirable if we want to use these as our primary coreutils.
-
-The fix here was to patch the ebuild to remove the `uu-` prefix.
 
 ## Problem #3 - uutils missing commands
 
@@ -84,9 +84,7 @@ If only things were so simple. I barely finished celebrating before I figured I 
 cowsay: Could not find cowfile for 'default.cow'!
 ```
 
-Some more strace'ing and I figured out that cowsay was looking for these template files relative to the path it was invoked at. We had in fact succesfully installed the template files in the correct location as defined by the cowsay ebuild.
-
-I was stumped on this for a bit before realizing it wasn't a uutils coreutils problem at all. This Gentoo setup has `/bin`, `/sbin`, `/usr/bin`, and `/usr/sbin` all merged. Since I was running this as root (I was doing all this testing without a real Gentoo install, just chroot'ed into a stage3 tarball) `/usr/sbin` was on my path before `/usr/bin`, which broke the expectations of the cowsay package, which expected to find its template files at a location relative to `/usr/bin`.
+I was stumped on this for a bit before realizing it wasn't a uutils coreutils problem at all. This Gentoo setup has `/bin`, `/sbin`, `/usr/bin`, and `/usr/sbin` all merged. Since I was running this as root (I was doing all this testing without a real Gentoo install, just chroot'ed into a stage3 tarball) `/usr/sbin` was on my path before `/usr/bin`, which broke an [expectation of the cowsay package](https://github.com/cowsay-org/cowsay/blob/d8c459357cc204723504e29be84607ceef2c5d42/cowsay#L85).
 
 ```
 # /usr/bin/cowsay hi
@@ -120,7 +118,7 @@ It turns out `md5sum` isn't the only command missing from uutils coreutils, when
 
 The correct answer here, as far as I know it, is to use `equery files sys-apps/coreutils` before replacing GNU coreutils to figure out exactly what is provided. Then run the same command affter "updating" to uutils coreutils. From there it'd be a matter of diff'ing those two lists and patching up any gaps.
 
-## Conclusion
+## Try it out
 
 If you want to play around with this, clone [this repo](https://github.com/JoshMcguigan/cascade), checkout `aac06b31d318542ee363d1299267a8bb49265bd9`, and run `just clean chroot`. This will pull down a Gentoo stage 3 tarball and replace the GNU coreutils with those by uutils. From there you'll be dropped into a chroot to test out the system.
 
