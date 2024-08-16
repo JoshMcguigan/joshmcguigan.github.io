@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>TSL256X Light Intensity Sensor Driver</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">TSL256X Light Intensity Sensor Driver</h1>
+
+<p class="subtitle">2018-07-15</p>
+
+<p>It is an exciting time to be working in embedded Rust. After writing <a href="/blog/shift-register-driver/">my first driver</a>, I mostly had the feeling that for driver writers there was a clear expectation and an obvious standard for how things should be done. My experience writing this driver, which uses I2C rather than GPIO, exposed me to a few topics of active discussion within the embedded Rust working group which I hadn't seen before.</p>
+<h2 id="measuring-light-intensity">Measuring Light Intensity</h2>
+<p>Lux is a measure of light intensity normalized based on the perception of the human eye. The TSL256X has two sensors, one measuring a broad spectrum including light from both the visible and IR range, and the other measuring just the IR range. The datasheet includes empirically derived formulas for converting the raw output of these two sensors to a single Lux measurement.</p>
+<p>The TSL256X driver, in its current state, includes methods to get the raw sensor data for each on-board sensor but it does not perform the Lux calculation. This is primarily due to the limited floating point math operations available in the Rust core library. For many use cases, it may be enough to directly use the raw sensor values, as shown below:</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">extern crate</span><span> tsl256x;
+</span><span style="color:#72ab00;">use </span><span>tsl256x::{Tsl2561, SlaveAddr};
+</span><span>
+</span><span style="color:#668f14;">let</span><span> addr </span><span style="color:#72ab00;">= </span><span>SlaveAddr::default().</span><span style="color:#b39f04;">addr</span><span>();
+</span><span style="color:#668f14;">let</span><span> sensor </span><span style="color:#72ab00;">= </span><span>Tsl2561::new(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> i2c, addr).</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>
+</span><span>sensor.</span><span style="color:#b39f04;">power_on</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> i2c); 
+</span><span>
+</span><span style="color:#7f8989;">// Note sensor readings are zero until one integration
+</span><span style="color:#7f8989;">//      period (default 400ms) after power on
+</span><span style="color:#a2a001;">iprintln!</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> cp.</span><span style="color:#b3933a;">ITM</span><span>.stim[</span><span style="color:#b3933a;">0</span><span>], </span><span style="color:#d07711;">&quot;IR+Visible: {}, IR Only: {}&quot;</span><span>,
+</span><span>                    sensor.</span><span style="color:#b39f04;">visible_and_ir_raw</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> i2c).</span><span style="color:#b39f04;">unwrap</span><span>(),
+</span><span>                    sensor.</span><span style="color:#b39f04;">ir_raw</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> i2c).</span><span style="color:#b39f04;">unwrap</span><span>());
+</span></code></pre>
+<p>The driver is available on <a href="https://crates.io/crates/tsl256x">crates.io</a> and <a href="https://github.com/JoshMcguigan/tsl256x">GitHub</a>.</p>
+<h2 id="the-challenges">The Challenges</h2>
+<p>The challenges here are primarily non-technical, instead centering around how the driver fits into the overall embedded Rust ecosystem. Ultimately I think there would be benefit in documenting a set of standards for embedded-hal drivers to adhere to, which could answer questions like these.</p>
+<h4 id="crate-naming">Crate Naming</h4>
+<blockquote>
+<p>There are only two hard things in Computer Science: cache invalidation and naming things.</p>
+</blockquote>
+<p>The TSL256X family includes two devices, the TSL2560 and TSL2561, which differ only in the communication protocol they support. This brings up questions about how the driver crate(s) should be named. Looking for existing discussions of this revealed <a href="https://github.com/rust-lang-nursery/embedded-wg/issues/39#issuecomment-370545982">this comment</a> with a few follow up replies, and some discussion in <a href="https://github.com/rust-lang-nursery/embedded-wg/issues/27">this issue</a>, but I don't think a broadly applicable consensus has been reached on this issue.</p>
+<p>While the initial release of this driver crate only supports the TSL2561 (the I2C version), I chose the crate name <code>tsl256x</code> based on the general feeling I get that the community is leaning toward single crates with generic names supporting multiple devices. However, as I think about this more, I think I may have made a mistake here, given that drivers are basically an abstraction over the communications requirements of the device and the difference between the two devices in the TSL256X family is the communications protocol supported. Any feedback or guidance here would be much appreciated.</p>
+<h4 id="device-addressing">Device Addressing</h4>
+<p>I2C devices generally support either a single slave address or choosing one of a few addresses. Existing driver crates, from what I have seen, typically hardcode these addresses (actually in a non-exhaustive review of the I2C drivers on <a href="https://github.com/rust-embedded/awesome-embedded-rust#driver-crates">awesome embedded Rust</a> I could only find examples of devices/drivers which support a single address). The TSL256X family supports choosing one of three addresses, which I certainly wanted to support with the driver. However, there are also device address translators such as the LTC4316, which effectively means that in the general case any device may be accessible at any address, and I also wanted to support this use case.</p>
+<p>For this reason, the <code>new</code> method takes the device address as a parameter:</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">pub fn </span><span style="color:#c23f31;">new</span><span>(</span><span style="color:#5597d6;">_i2c</span><span>: </span><span style="color:#72ab00;">&amp;</span><span>I2C, </span><span style="color:#5597d6;">address</span><span>: </span><span style="color:#668f14;">u8</span><span>) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;</span><span style="color:#668f14;">Self</span><span>, E&gt;
+</span></code></pre>
+<p>But just taking a u8 as the address would not be too friendly to the typical user, who would use one of the three device addresses directly supported by the device. For that, the driver crate also includes an enumeration of those addresses, with a <code>Default</code> impl.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#5597d6;">allow</span><span>(dead_code)]
+</span><span>#[</span><span style="color:#5597d6;">allow</span><span>(non_camel_case_types)]
+</span><span>#[</span><span style="color:#5597d6;">derive</span><span>(Copy, Clone)]
+</span><span style="color:#7f8989;">/// Possible slave addresses
+</span><span style="color:#668f14;">pub enum </span><span style="color:#c23f31;">SlaveAddr </span><span>{
+</span><span>    </span><span style="color:#7f8989;">/// Default slave address
+</span><span>    ADDR_0x39 </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0x39</span><span>,
+</span><span>    </span><span style="color:#7f8989;">/// Optional slave address
+</span><span>    ADDR_0x29 </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0x29</span><span>,
+</span><span>    </span><span style="color:#7f8989;">/// Optional slave address
+</span><span>    ADDR_0x49 </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0x49</span><span>,
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>Default </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">SlaveAddr </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">default</span><span>() -&gt; </span><span style="color:#668f14;">Self </span><span>{
+</span><span>        SlaveAddr::ADDR_0x39
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">impl </span><span style="color:#c23f31;">SlaveAddr </span><span>{
+</span><span>    </span><span style="color:#7f8989;">/// Get slave address as u8
+</span><span>    </span><span style="color:#668f14;">pub fn </span><span style="color:#c23f31;">addr</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>) -&gt; </span><span style="color:#668f14;">u8 </span><span>{
+</span><span>        </span><span style="color:#72ab00;">*</span><span style="color:#5597d6;">self </span><span style="color:#72ab00;">as </span><span style="color:#668f14;">u8
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>which allows for the following constructor pattern when using the default address:</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span>Tsl2561::new(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> i2c, SlaveAddr::default().</span><span style="color:#b39f04;">addr</span><span>())
+</span></code></pre>
+<p>This works well, but I do wonder if there is an even better solution. I believe it would be possible to build, as a standalone crate, an I2C device address translator struct which consumes an embedded-hal <code>I2C</code> type and itself impl's the <code>I2C</code> traits, but translates the address of all traffic through it based on a user-configurable address map.</p>
+<h4 id="to-init-or-not-to-init">To Init or Not to Init?</h4>
+<p>The TSL256X, like most peripherals, requires some initialization after connecting it to power before it can be used. Most driver crates I've seen do the initialization as part of the <code>new</code> method, which is user friendly for most use cases, but what if we are connecting to a device which we know is already initialized, or we want to modify the configuration before initialization, or we don't want to immediately power on the device in order to save energy?</p>
+<p>In this crate, I've chosen to skip initialization in the <code>new</code> method, and require the user to explicitly <code>power_on</code> the device. Generally, I think either the <code>new</code> method should not perform any initialization of the actual device, or there should be a standard method like <code>new_skip_init</code> to provide the option of creating a new driver instance without running the initialization code.</p>
+<h4 id="i2c-bus-sharing">I2C Bus Sharing</h4>
+<p>At the moment, the prevailing standard within the embedded-hal drivers is to consume the I2C bus when creating a new device instance, like this:</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">pub fn </span><span style="color:#c23f31;">new</span><span>(</span><span style="color:#5597d6;">i2c</span><span>: I2C) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;</span><span style="color:#668f14;">Self</span><span>, E&gt;
+</span></code></pre>
+<p>The trouble is, that doesn't allow for multiple devices to share the I2C bus. There is discussion of this exact issue <a href="https://github.com/japaric/embedded-hal/issues/35">on GitHub here</a>. I don't feel like I have a broad enough understanding in this area, particularly around the needs of async, to push for a particular solution here. That said, I still wanted this crate to support sharing the I2C bus. For that reason, the <code>new</code> method as well as all other methods on the driver struct borrow (rather than take ownership over) the I2C bus. This solves the bus sharing problem in the short term, and easily refactors to any of the other proposed solutions in the longer term.</p>
+<h2 id="future-work">Future Work</h2>
+<p>Even with the challenges listed above, writing a driver is a great way to get involved in embedded Rust. If there were a driver development document to answer the questions above with the standard community solution, it would make the barrier of entry for new developers even lower, and ensure consistency across drivers. I would be happy to be involved in writing this document, although I think the most important thing is to ensure that the standards reflect the broader community opinion on these issues and they've been properly vetted by both driver users and driver developers.</p>
+<p>I know that not all of the decisions I have made in developing the TSL256X driver would align with the official standard. In those areas, I would rewrite/refactor/update the driver to be compliant.</p>
+<h2 id="getting-involved">Getting Involved</h2>
+<p>Writing drivers for embedded Rust has been a great learning experience, and I still think that writing a driver is a great way to get involved as a newcomer to embedded Rust programming, or even embedded programming in general. If you're interested, I'd start by reading <a href="https://github.com/rust-lang-nursery/embedded-wg/issues/39">this introductory post on the weekly driver initiative</a>, as well as reviewing some of the <a href="https://github.com/rust-embedded/awesome-embedded-rust#driver-crates">existing drivers</a>. From there, you can pick a device which doesn't already have a driver and jump in.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Investigating slow incremental no-change Rust builds</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Investigating slow incremental no-change Rust builds</h1>
+
+<p class="subtitle">2021-12-15</p>
+
+<p>I created a new Rust project recently (<code>cargo new hello</code>), and I happened to notice that repeated incremental builds, with no changes to the hello world project, were taking on the order of 100ms.</p>
+<p>This is just on the edge of what <a href="https://www.nngroup.com/articles/response-times-3-important-limits/">users experience as instantaneous</a>. Of course in many instances this time is dwarfed by the actual compilation time, but if you are using something like the <a href="https://github.com/matklad/cargo-xtask">cargo xtask</a> pattern (or if you simply <code>cargo run</code> a lot), this is adding meaningful latency to the execution of your command.</p>
+<h2 id="recreating-the-result-with-a-local-build">Recreating the result with a local build</h2>
+<p>Given I wanted to attempt to improve the performance in this case, I first wanted to confirm that I could recreate this result with a local build of cargo.</p>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#7f8989;"># clone cargo and switch to that directory
+</span><span style="color:#5597d6;">..
+</span><span>
+</span><span style="color:#7f8989;"># use the version of cargo installed on my machine to build cargo from source
+</span><span style="color:#5597d6;">cargo</span><span> build</span><span style="color:#5597d6;"> --release
+</span><span>
+</span><span style="color:#7f8989;"># switch to the directory containing the example hello world project
+</span><span style="color:#5597d6;">..
+</span><span>
+</span><span style="color:#7f8989;"># use the built from source version of cargo to build the hello world project
+</span><span style="color:#5597d6;">time</span><span> ../cargo/target/release/cargo build
+</span><span>
+</span><span style="color:#7f8989;"># run the same command again to get the time for a no-change incremental rebuild
+</span><span style="color:#5597d6;">time</span><span> ../cargo/target/release/cargo build
+</span></code></pre>
+<p>Unfortunately (or fortunately?) after rebuilding cargo from source I wasn't seeing the same performance issue as with the installed version of cargo. At first I thought perhaps cargo had been updated recently to improve performance here, so I ran <code>cargo -V</code> to get the exact commit sha of the currently installed version of cargo on my machine and rebuilt that from source - and it also performed better than the installed version of cargo.</p>
+<p>This was very surprising. At first I wondered if this could be the result of compiling cargo with a newer version of the rust compiler, but this performance delta seemed too large to be explained by that. I also considered that perhaps the installed version of cargo (which I had installed via rustup) used the statically linked musl-libc, but checking with <code>lld</code> showed that not to be the case.</p>
+<h1 id="further-investigations-into-the-rustup-provided-cargo-binary">Further investigations into the rustup provided cargo binary</h1>
+<p>Running <code>strace cargo build</code> provided a hint about what was happening here.</p>
+<pre style="background-color:#f5f5f5;color:#1f1f1f;"><code><span>execve(&quot;/home/josh/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo&quot;, [&quot;/home/josh/.rustup/toolchains/st&quot;..., &quot;build&quot;], 0x55ba190e0880 /* 41 vars */) = 0
+</span></code></pre>
+<p>The rustup provided "cargo" binary, located on my machine at <code>~/.cargo/bin/cargo</code> is not actually cargo. That binary is a <code>rustup</code> binary, which does things like check for project configuration files to determine which version of the rust toolchain to invoke, before proxying the command to the real cargo binary.</p>
+<pre style="background-color:#f5f5f5;color:#1f1f1f;"><code><span>time /home/josh/.rustup/toolchains/stable-x86_64-unknown-linux-gnu/bin/cargo build
+</span></code></pre>
+<p>Timing the actual cargo binary on my machine demonstrated that the performance issue I was noting was actually in rustup itself.</p>
+<h1 id="digging-into-rustup">Digging into rustup</h1>
+<p>So why does rustup have so much overhead in a hello world project with no project specific configuration? I first built rustup from source to check if the latest version has this issue. As of this writing, building rustup from HEAD does in fact provide a performance improvement, but there was still a larger overhead than I would expect.</p>
+<p>From there I created a flamegraph of rustup while building the hello world project, and found it spent a lot of time parsing a very large toml file. However, building a basic project does not depend on the contents of this toml file.</p>
+<p>I opened <a href="https://github.com/rust-lang/rustup/pull/2917">this PR</a> against rustup which skips parsing the file when it isn't needed, resulting in an 80% reduction of the rustup overhead for this use case.</p>
+<p>As part of reading this file rustup will also detect problems with this file and fix them if needed. I believe that was an unintended side effect, as I think any operation that doesn't depend on that file shouldn't be required to validate and fix it. However, the rustup test suite does rely on that side effect. For that reason this PR currently fails in CI, but I'm hopeful that someone more familiar with rustup can confirm my assumption here - as I'd be happy to clean up the tests to get this passing in CI.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>This was a quick, fun, real world investigation into a (minor) performance issue in a widely used tool. A potential fix has been proposed, but I'll need to develop a better understanding of rustup to determine whether the fix I've implemented here doesn't break some other use case.</p>
+<p>Along the way I also learned something about how rustup works (tldr: <code>~/.cargo/bin/cargo</code> is not actually <code>cargo</code>).</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

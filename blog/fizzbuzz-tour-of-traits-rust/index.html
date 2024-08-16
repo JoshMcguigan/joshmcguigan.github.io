@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>A FizzBuzzy Tour of Traits in Rust</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">A FizzBuzzy Tour of Traits in Rust</h1>
+
+<p class="subtitle">2018-08-13</p>
+
+<p>Traits are a core part of the Rust programming language, and understanding traits, particularly those which are part of the standard library, is necessary in order to write idiomatic Rust. In this post I'll write several <a href="https://en.wikipedia.org/wiki/Fizz_buzz">FizzBuzz</a> implementations, each demonstrating the use of a different trait from the Rust standard library.</p>
+<p>While I do think that knowing and using these traits is necessary for writing idiomatic Rust code, I would not claim that any one of these examples is <em>the best</em> way to write FizzBuzz in Rust. <a href="https://www.tomdalling.com/blog/software-design/fizzbuzz-in-too-much-detail/">This blog post by Tom Dalling</a> provides a great explanation for why 'optimizing' FizzBuzz is a bad idea.</p>
+<p>One last thing I want to mention before getting started is that there are at least a handful of traits which are more common (and arguably more useful) than the traits I am going to discuss here. Many traits which have obvious implementations can be automatically derived by adding <code>#[derive(TraitName)]</code> annotations to your code (a list of derive-able traits is available <a href="https://doc.rust-lang.org/rust-by-example/trait/derive.html">here</a>). In this post, I've chosen to focus on a set of traits that I think are very useful, but cannot be automatically derived.</p>
+<h2 id="a-starting-point">A Starting Point</h2>
+<p>Before beginning the discussion of Traits, I'll create a baseline implementation of FizzBuzz which will serve as a starting point for all of the examples. It is possible to write FizzBuzz in Rust with a style that would be familiar from many other languages.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">for</span><span> i </span><span style="color:#72ab00;">in </span><span style="color:#b3933a;">1</span><span style="color:#668f14;">u32</span><span style="color:#72ab00;">..=</span><span style="color:#b3933a;">100 </span><span>{
+</span><span>
+</span><span>    </span><span style="color:#668f14;">let</span><span> divisible_by_three </span><span style="color:#72ab00;">=</span><span> i </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">3 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">0</span><span>;
+</span><span>    </span><span style="color:#668f14;">let</span><span> divisible_by_five </span><span style="color:#72ab00;">=</span><span> i </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">5 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">0</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#72ab00;">if</span><span> divisible_by_three </span><span style="color:#72ab00;">&amp;&amp;</span><span> divisible_by_five {
+</span><span>        </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;FizzBuzz&quot;</span><span>);
+</span><span>    } </span><span style="color:#72ab00;">else if</span><span> divisible_by_three {
+</span><span>        </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;Fizz&quot;</span><span>);
+</span><span>    } </span><span style="color:#72ab00;">else if</span><span> divisible_by_five {
+</span><span>        </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;Buzz&quot;</span><span>);
+</span><span>    } </span><span style="color:#72ab00;">else </span><span>{
+</span><span>        </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, i);
+</span><span>    }
+</span><span>
+</span><span>}
+</span></code></pre>
+<p>Rust has a feature called pattern matching which can be used to express these kind of if-else statements, while providing a guarantee that you haven't missed an edge case. Using match, you'd get:</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">for</span><span> i </span><span style="color:#72ab00;">in </span><span style="color:#b3933a;">1</span><span style="color:#668f14;">u32</span><span style="color:#72ab00;">..=</span><span style="color:#b3933a;">100 </span><span>{
+</span><span>
+</span><span>    </span><span style="color:#668f14;">let</span><span> divisible_by_three </span><span style="color:#72ab00;">=</span><span> i </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">3 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">0</span><span>;
+</span><span>    </span><span style="color:#668f14;">let</span><span> divisible_by_five </span><span style="color:#72ab00;">=</span><span> i </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">5 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">0</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#72ab00;">match </span><span>(divisible_by_three, divisible_by_five) {
+</span><span>        (</span><span style="color:#b3933a;">true</span><span>, </span><span style="color:#b3933a;">true</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;FizzBuzz&quot;</span><span>),
+</span><span>        (</span><span style="color:#b3933a;">true</span><span>, </span><span style="color:#b3933a;">false</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;Fizz&quot;</span><span>),
+</span><span>        (</span><span style="color:#b3933a;">false</span><span>, </span><span style="color:#b3933a;">true</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;Buzz&quot;</span><span>),
+</span><span>        (</span><span style="color:#b3933a;">false</span><span>, </span><span style="color:#b3933a;">false</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, i),
+</span><span>    }
+</span><span>
+</span><span>}
+</span></code></pre>
+<p>Even in this simple example, we are already making use of traits from the standard library. One I'd like to discuss in particular is the <code>Display</code> trait, which we use in the last arm of the match statement when we write <code>println!("{}", i)</code>. In this case, <code>i</code> is of type <code>u32</code>, and <code>u32</code> implements the <code>Display</code> trait. The <code>Display</code> trait is used whenever you use the format/print/println family of macros with the placeholder <code>{}</code>. Later we'll derive the <code>Display</code> trait ourselves on a new type.</p>
+<p>For now let's move on to the discussion of traits, using this code as a rough starting point.</p>
+<h2 id="trait-bounds-and-intoiterator">Trait Bounds and IntoIterator</h2>
+<p>Lets say you want to write a function which can take a <code>vec</code> of integers and run FizzBuzz on that <code>vec</code>.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">fn </span><span style="color:#c23f31;">fizzbuzz_vec</span><span>(</span><span style="color:#5597d6;">nums</span><span>: </span><span style="color:#72ab00;">&amp;</span><span style="color:#a2a001;">Vec</span><span>&lt;</span><span style="color:#668f14;">u32</span><span>&gt;) {
+</span><span>    </span><span style="color:#72ab00;">for</span><span> num </span><span style="color:#72ab00;">in</span><span> nums {
+</span><span>        </span><span style="color:#668f14;">let</span><span> divisible_by_three </span><span style="color:#72ab00;">=</span><span> num </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">3 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">0</span><span>;
+</span><span>        </span><span style="color:#668f14;">let</span><span> divisible_by_five </span><span style="color:#72ab00;">=</span><span> num </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">5 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">0</span><span>;
+</span><span>
+</span><span>        </span><span style="color:#72ab00;">match </span><span>(divisible_by_three, divisible_by_five) {
+</span><span>            (</span><span style="color:#b3933a;">true</span><span>, </span><span style="color:#b3933a;">true</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;FizzBuzz&quot;</span><span>),
+</span><span>            (</span><span style="color:#b3933a;">true</span><span>, </span><span style="color:#b3933a;">false</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;Fizz&quot;</span><span>),
+</span><span>            (</span><span style="color:#b3933a;">false</span><span>, </span><span style="color:#b3933a;">true</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;Buzz&quot;</span><span>),
+</span><span>            (</span><span style="color:#b3933a;">false</span><span>, </span><span style="color:#b3933a;">false</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, num),
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>But what if you also wanted a function to support FizzBuzzing over an array, rather than a vec, of integers? You could write a second function to handle arrays, but this is the perfect use case for trait bounds.</p>
+<p><code>IntoIterator</code> is a trait from the standard library which says a type can be converted into an iterator. The <code>for-in</code> syntax we are using requires a type which implements either the <code>IntoIterator</code> or the <code>Iterator</code> trait, and the standard library implements the <code>IntoIterator</code> trait for both vectors and arrays.</p>
+<p>Using this to write a function which takes any type that implements <code>IntoIterator</code> for items of type <code>u32</code> (meaning the iterator will return items of type <code>u32</code>) looks like this:</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">fn </span><span style="color:#c23f31;">fizzbuzz</span><span>&lt;</span><span style="color:#668f14;">&#39;a</span><span>, T&gt;(</span><span style="color:#5597d6;">nums</span><span>: T)
+</span><span>    </span><span style="color:#72ab00;">where</span><span> T: </span><span style="color:#a2a001;">IntoIterator</span><span>&lt;Item = </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">&#39;a u32</span><span>&gt;
+</span><span>{
+</span><span>    </span><span style="color:#72ab00;">for</span><span> num </span><span style="color:#72ab00;">in</span><span> nums {
+</span><span>        </span><span style="color:#668f14;">let</span><span> divisible_by_three </span><span style="color:#72ab00;">=</span><span> num </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">3 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">0</span><span>;
+</span><span>        </span><span style="color:#668f14;">let</span><span> divisible_by_five </span><span style="color:#72ab00;">=</span><span> num </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">5 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">0</span><span>;
+</span><span>
+</span><span>        </span><span style="color:#72ab00;">match </span><span>(divisible_by_three, divisible_by_five) {
+</span><span>            (</span><span style="color:#b3933a;">true</span><span>, </span><span style="color:#b3933a;">true</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;FizzBuzz&quot;</span><span>),
+</span><span>            (</span><span style="color:#b3933a;">true</span><span>, </span><span style="color:#b3933a;">false</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;Fizz&quot;</span><span>),
+</span><span>            (</span><span style="color:#b3933a;">false</span><span>, </span><span style="color:#b3933a;">true</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;Buzz&quot;</span><span>),
+</span><span>            (</span><span style="color:#b3933a;">false</span><span>, </span><span style="color:#b3933a;">false</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, num),
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Either of these functions can be called with a vec as the argument, but the second can also be called with an array.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">let</span><span> nums : </span><span style="color:#a2a001;">Vec</span><span>&lt;</span><span style="color:#668f14;">u32</span><span>&gt; </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">vec!</span><span>[</span><span style="color:#b3933a;">1</span><span>,</span><span style="color:#b3933a;">2</span><span>,</span><span style="color:#b3933a;">3</span><span>,</span><span style="color:#b3933a;">4</span><span>,</span><span style="color:#b3933a;">5</span><span>,</span><span style="color:#b3933a;">15</span><span>];
+</span><span style="color:#b39f04;">fizzbuzz_vec</span><span>(</span><span style="color:#72ab00;">&amp;</span><span>nums);
+</span><span>
+</span><span style="color:#668f14;">let</span><span> nums : </span><span style="color:#a2a001;">Vec</span><span>&lt;</span><span style="color:#668f14;">u32</span><span>&gt; </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">vec!</span><span>[</span><span style="color:#b3933a;">1</span><span>,</span><span style="color:#b3933a;">2</span><span>,</span><span style="color:#b3933a;">3</span><span>,</span><span style="color:#b3933a;">4</span><span>,</span><span style="color:#b3933a;">5</span><span>,</span><span style="color:#b3933a;">15</span><span>];
+</span><span style="color:#b39f04;">fizzbuzz</span><span>(</span><span style="color:#72ab00;">&amp;</span><span>nums);
+</span><span>
+</span><span style="color:#668f14;">let</span><span> nums: [</span><span style="color:#668f14;">u32</span><span>; </span><span style="color:#b3933a;">6</span><span>] </span><span style="color:#72ab00;">= </span><span>[</span><span style="color:#b3933a;">1</span><span>,</span><span style="color:#b3933a;">2</span><span>,</span><span style="color:#b3933a;">3</span><span>,</span><span style="color:#b3933a;">4</span><span>,</span><span style="color:#b3933a;">5</span><span>,</span><span style="color:#b3933a;">15</span><span>];
+</span><span style="color:#b39f04;">fizzbuzz</span><span>(</span><span style="color:#72ab00;">&amp;</span><span>nums);
+</span></code></pre>
+<h2 id="from-into-and-display">From/Into and Display</h2>
+<p>The <code>From</code> trait is used to convert from one type to another. In this case we'll create a <code>FizzBuzz</code> enum, and implement <code>From</code> so we can easily convert from a <code>u32</code> to a <code>FizzBuzz</code>.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#5597d6;">derive</span><span>(Debug)]
+</span><span style="color:#668f14;">enum </span><span style="color:#c23f31;">FizzBuzz </span><span>{
+</span><span>    Fizz,
+</span><span>    Buzz,
+</span><span>    FizzBuzz,
+</span><span>    Other(</span><span style="color:#668f14;">u32</span><span>),
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">impl </span><span style="color:#a2a001;">From</span><span>&lt;</span><span style="color:#668f14;">u32</span><span>&gt; </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">FizzBuzz </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">from</span><span>(</span><span style="color:#5597d6;">item</span><span>: </span><span style="color:#668f14;">u32</span><span>) -&gt; </span><span style="color:#668f14;">Self </span><span>{
+</span><span>        </span><span style="color:#72ab00;">match </span><span>(item </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">3 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">0</span><span>, item </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">5 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">0</span><span>) {
+</span><span>            (</span><span style="color:#b3933a;">false</span><span>, </span><span style="color:#b3933a;">false</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span>FizzBuzz::Other(item),
+</span><span>            (</span><span style="color:#b3933a;">true</span><span>, </span><span style="color:#b3933a;">false</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span>FizzBuzz::Fizz,
+</span><span>            (</span><span style="color:#b3933a;">false</span><span>, </span><span style="color:#b3933a;">true</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span>FizzBuzz::Buzz,
+</span><span>            (</span><span style="color:#b3933a;">true</span><span>, </span><span style="color:#b3933a;">true</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span>FizzBuzz::FizzBuzz,
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#72ab00;">for</span><span> i </span><span style="color:#72ab00;">in </span><span style="color:#b3933a;">1</span><span style="color:#72ab00;">..=</span><span style="color:#b3933a;">100 </span><span>{
+</span><span>    </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{:?}</span><span style="color:#d07711;">&quot;</span><span>, FizzBuzz::from(i));
+</span><span>}
+</span></code></pre>
+<p>An additional benefit of implementing the <code>From</code> trait is the <code>Into</code> trait is automatically implemented. In most cases, using into requires specifying the type you want to convert to because there will not be enough information for the compiler to infer it. An example of this is below:</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">for</span><span> i </span><span style="color:#72ab00;">in </span><span style="color:#b3933a;">1</span><span style="color:#72ab00;">..=</span><span style="color:#b3933a;">100 </span><span>{
+</span><span>    </span><span style="color:#668f14;">let</span><span> fizzbuzz : FizzBuzz </span><span style="color:#72ab00;">=</span><span> i.</span><span style="color:#b39f04;">into</span><span>();
+</span><span>    </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{:?}</span><span style="color:#d07711;">&quot;</span><span>, fizzbuzz);
+</span><span>}
+</span></code></pre>
+<p>Note that while we derive <code>Debug</code> on our enumeration and rely on that to print the variants (<code>{:?}</code> is used to debug print), we could implement our own display logic with the <code>Display</code> trait. While the <code>Fizz</code>, <code>Buzz</code>, and <code>FizzBuzz</code> variants are handled like we'd want already, the <code>Other</code> variant should be changed so that it only prints the number (the derived <code>Debug</code> implementation prints <code>Other(x)</code>).</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">impl </span><span>Display </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">FizzBuzz </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">fmt</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">f</span><span>: </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> Formatter) -&gt; fmt::Result {
+</span><span>        </span><span style="color:#72ab00;">match </span><span style="color:#5597d6;">self </span><span>{
+</span><span>            FizzBuzz::Other(n) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">write!</span><span>(f, </span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, n),
+</span><span>            </span><span style="color:#72ab00;">_ =&gt; </span><span style="color:#a2a001;">write!</span><span>(f, </span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{:?}</span><span style="color:#d07711;">&quot;</span><span>, </span><span style="color:#5597d6;">self</span><span>),
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<h2 id="fn">Fn</h2>
+<p>The <code>Fn</code> family of traits, <code>Fn</code>/<code>FnMut</code>/<code>FnOnce</code>, is used to mark that a type can be called like a function. Using this, we can create a struct which takes four functions as constructor arguments, and then exposes an eval method which takes a <code>u32</code> as input and runs one of the four functions depending on whether the input is divisible by three, divisible by five, divisible by both three and five, or divisible by neither three nor five.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">struct </span><span style="color:#c23f31;">FizzBuzzer</span><span>&lt;FnFizz, FnBuzz, FnFizzBuzz, FnOther&gt; {
+</span><span>    </span><span style="color:#5597d6;">fn_fizz</span><span>: FnFizz,
+</span><span>    </span><span style="color:#5597d6;">fn_buzz</span><span>: FnBuzz,
+</span><span>    </span><span style="color:#5597d6;">fn_fizzbuzz</span><span>: FnFizzBuzz,
+</span><span>    </span><span style="color:#5597d6;">fn_other</span><span>: FnOther,
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">impl</span><span>&lt;FnFizz, FnBuzz, FnFizzBuzz, FnOther&gt; </span><span style="color:#c23f31;">FizzBuzzer</span><span>&lt;FnFizz, FnBuzz, FnFizzBuzz, FnOther&gt;
+</span><span>    </span><span style="color:#72ab00;">where
+</span><span>        FnFizz: Fn(),
+</span><span>        FnBuzz: Fn(),
+</span><span>        FnFizzBuzz: Fn(),
+</span><span>        FnOther: Fn(</span><span style="color:#668f14;">u32</span><span>),
+</span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">new</span><span>(</span><span style="color:#5597d6;">fn_fizz</span><span>: FnFizz, </span><span style="color:#5597d6;">fn_buzz</span><span>: FnBuzz, </span><span style="color:#5597d6;">fn_fizzbuzz</span><span>: FnFizzBuzz, </span><span style="color:#5597d6;">fn_other</span><span>: FnOther) -&gt; </span><span style="color:#668f14;">Self </span><span>{
+</span><span>        </span><span style="color:#668f14;">Self </span><span>{ fn_fizz, fn_buzz, fn_fizzbuzz, fn_other }
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">eval</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">num</span><span>: </span><span style="color:#668f14;">u32</span><span>) {
+</span><span>        </span><span style="color:#72ab00;">match </span><span>(num </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">3 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">0</span><span>, num </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">5 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">0</span><span>) {
+</span><span>            (</span><span style="color:#b3933a;">false</span><span>, </span><span style="color:#b3933a;">false</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span>(</span><span style="color:#5597d6;">self</span><span>.fn_other)(num),
+</span><span>            (</span><span style="color:#b3933a;">true</span><span>, </span><span style="color:#b3933a;">false</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span>(</span><span style="color:#5597d6;">self</span><span>.fn_fizz)(),
+</span><span>            (</span><span style="color:#b3933a;">false</span><span>, </span><span style="color:#b3933a;">true</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span>(</span><span style="color:#5597d6;">self</span><span>.fn_buzz)(),
+</span><span>            (</span><span style="color:#b3933a;">true</span><span>, </span><span style="color:#b3933a;">true</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span>(</span><span style="color:#5597d6;">self</span><span>.fn_fizzbuzz)(),
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Notice in the <code>where</code> clause on the <code>impl</code> statement, we specify that <code>FnFizz</code>/<code>FnBuzz</code>/<code>FnFizzBuzz</code> are of type <code>Fn()</code>, a function which takes no arguments and provides no return value, and <code>FnOther</code> is of type <code>Fn(u32)</code>, a function which takes a single <code>u32</code> argument and provides no return.</p>
+<p>The struct can be instantiated by passing four closures to the <code>new</code> method, and used by passing <code>u32</code> types to the <code>eval</code> method, as shown below.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">let</span><span> fizzbuzzer </span><span style="color:#72ab00;">= </span><span>FizzBuzzer::new(
+</span><span>    || </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;Fizz&quot;</span><span>),
+</span><span>    || </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;Buzz&quot;</span><span>),
+</span><span>    || </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;FizzBuzz&quot;</span><span>),
+</span><span>    |</span><span style="color:#5597d6;">num</span><span>| </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, num),
+</span><span>);
+</span><span>
+</span><span style="color:#72ab00;">for</span><span> i </span><span style="color:#72ab00;">in </span><span style="color:#b3933a;">1</span><span style="color:#72ab00;">..=</span><span style="color:#b3933a;">100 </span><span>{
+</span><span>    fizzbuzzer.</span><span style="color:#b39f04;">eval</span><span>(i);
+</span><span>}
+</span></code></pre>
+<h2 id="iterator">Iterator</h2>
+<p>As mentioned in the section on trait bounds, implementing either the <code>Iterator</code> or <code>IntoIterator</code> trait in Rust allows for your type to be used in for loops.</p>
+<p>To implement <code>Iterator</code> on a type only requires implementing a single method, <code>fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt;</code> where <code>Self::Item</code> is the type that the iterator will return. To start, we'll create a struct to contain the state of the iterator.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">struct </span><span style="color:#c23f31;">FizzBuzzer </span><span>{
+</span><span>    </span><span style="color:#5597d6;">next</span><span>: </span><span style="color:#668f14;">u32</span><span>,
+</span><span>    </span><span style="color:#5597d6;">max</span><span>: </span><span style="color:#668f14;">u32</span><span>,
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">impl </span><span style="color:#c23f31;">FizzBuzzer </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">new</span><span>(</span><span style="color:#5597d6;">starting_value</span><span>: </span><span style="color:#668f14;">u32</span><span>, </span><span style="color:#5597d6;">length</span><span>: </span><span style="color:#668f14;">u32</span><span>) -&gt; </span><span style="color:#668f14;">Self </span><span>{
+</span><span>        </span><span style="color:#668f14;">let</span><span> max </span><span style="color:#72ab00;">= if</span><span> length </span><span style="color:#72ab00;">&gt; </span><span style="color:#b3933a;">0 </span><span>{ starting_value </span><span style="color:#72ab00;">+</span><span> length </span><span style="color:#72ab00;">- </span><span style="color:#b3933a;">1 </span><span>} </span><span style="color:#72ab00;">else </span><span>{ </span><span style="color:#b3933a;">0 </span><span>}; </span><span style="color:#7f8989;">// protect from underflow
+</span><span>        FizzBuzzer { next: starting_value, max }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Then we implement <code>Iterator</code> for our new type by creating a <code>next</code> method which will return an <code>Option&lt;String&gt;</code>.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">impl </span><span>Iterator </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">FizzBuzzer </span><span>{
+</span><span>    </span><span style="color:#668f14;">type </span><span style="color:#c23f31;">Item </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">String</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">next</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut </span><span style="color:#5597d6;">self</span><span>) -&gt; </span><span style="color:#a2a001;">Option</span><span>&lt;</span><span style="color:#668f14;">Self::</span><span>Item&gt; {
+</span><span>        </span><span style="color:#72ab00;">if </span><span style="color:#5597d6;">self</span><span>.next </span><span style="color:#72ab00;">&gt; </span><span style="color:#5597d6;">self</span><span>.max { </span><span style="color:#72ab00;">return </span><span style="color:#a2a001;">None </span><span>}
+</span><span>
+</span><span>        </span><span style="color:#668f14;">let</span><span> s </span><span style="color:#72ab00;">= match </span><span>(</span><span style="color:#5597d6;">self</span><span>.next </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">3 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">0</span><span>, </span><span style="color:#5597d6;">self</span><span>.next </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">5 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">0</span><span>) {
+</span><span>            (</span><span style="color:#b3933a;">false</span><span>, </span><span style="color:#b3933a;">false</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">format!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, </span><span style="color:#5597d6;">self</span><span>.next),
+</span><span>            (</span><span style="color:#b3933a;">true</span><span>, </span><span style="color:#b3933a;">false</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">String</span><span>::from(</span><span style="color:#d07711;">&quot;Fizz&quot;</span><span>),
+</span><span>            (</span><span style="color:#b3933a;">false</span><span>, </span><span style="color:#b3933a;">true</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">String</span><span>::from(</span><span style="color:#d07711;">&quot;Buzz&quot;</span><span>),
+</span><span>            (</span><span style="color:#b3933a;">true</span><span>, </span><span style="color:#b3933a;">true</span><span>) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">String</span><span>::from(</span><span style="color:#d07711;">&quot;FizzBuzz&quot;</span><span>),
+</span><span>        };
+</span><span>
+</span><span>        </span><span style="color:#5597d6;">self</span><span>.next </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>
+</span><span>        </span><span style="color:#a2a001;">Some</span><span>(</span><span style="color:#a2a001;">String</span><span>::from(s))
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Note, this code could be improved by using the clone on write type, as discussed in <a href="https://chrismorgan.info/blog/rust-fizzbuzz.html">this Rust-based FizzBuzz deep-dive by Chris Morgan</a>.</p>
+<p>With <code>Iterator</code> implemented on the <code>FizzBuzzer</code> type, it can be used as follows.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">for</span><span> text </span><span style="color:#72ab00;">in </span><span>FizzBuzzer::new(</span><span style="color:#b3933a;">1</span><span>, </span><span style="color:#b3933a;">100</span><span>) {
+</span><span>    </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, text);
+</span><span>}
+</span></code></pre>
+<h2 id="summary">Summary</h2>
+<p>Writing idiomatic Rust code requires not only understanding traits on a conceptual level, but also having a familiarity with the traits which are part of the Rust standard library. In typical Rust fashion, many of the common standard library traits can be automatically derived if they have an obvious implementation. In this post, I've covered some of the traits which integrate very tightly with the language, but which cannot be automatically derived. Using these traits, and implementing them on your own types where appropriate, will significantly improve the quality of the Rust code you produce.</p>
+<h4 id="edits">Edits</h4>
+<ol>
+<li>Modified code examples to use <code>u32</code> rather than <code>usize</code> based on <a href="https://www.reddit.com/r/rust/comments/96y6gp/a_fizzbuzzy_tour_of_traits_in_rust/e4491si/">this discussion</a></li>
+</ol>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

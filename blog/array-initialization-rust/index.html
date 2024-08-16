@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Methods for Array Initialization in Rust</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Methods for Array Initialization in Rust</h1>
+
+<p class="subtitle">2018-12-22</p>
+
+<p>Arrays in Rust are fixed size, and Rust requires that every element in an array is initialized to a valid value when the array is initialized. The result of these requirements is array initialization in Rust is a much deeper topic than it would seem.</p>
+<h2 id="array-literals">Array Literals</h2>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [</span><span style="color:#668f14;">u8</span><span>; </span><span style="color:#b3933a;">3</span><span>] </span><span style="color:#72ab00;">= </span><span>[</span><span style="color:#b3933a;">1</span><span>, </span><span style="color:#b3933a;">2</span><span>, </span><span style="color:#b3933a;">3</span><span>];
+</span><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">str</span><span>; </span><span style="color:#b3933a;">3</span><span>] </span><span style="color:#72ab00;">= </span><span>[</span><span style="color:#d07711;">&quot;1&quot;</span><span>, </span><span style="color:#d07711;">&quot;2&quot;</span><span>, </span><span style="color:#d07711;">&quot;3&quot;</span><span>];
+</span><span>
+</span><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [</span><span style="color:#a2a001;">String</span><span>; </span><span style="color:#b3933a;">3</span><span>] </span><span style="color:#72ab00;">= </span><span>[
+</span><span>    </span><span style="color:#a2a001;">String</span><span>::from(</span><span style="color:#d07711;">&quot;1&quot;</span><span>),
+</span><span>    </span><span style="color:#a2a001;">String</span><span>::from(</span><span style="color:#d07711;">&quot;2&quot;</span><span>),
+</span><span>    </span><span style="color:#a2a001;">String</span><span>::from(</span><span style="color:#d07711;">&quot;3&quot;</span><span>)
+</span><span>];
+</span><span>
+</span><span style="color:#668f14;">let mut</span><span> rng </span><span style="color:#72ab00;">= </span><span>rand::thread_rng();
+</span><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [</span><span style="color:#668f14;">u8</span><span>; </span><span style="color:#b3933a;">3</span><span>] </span><span style="color:#72ab00;">= </span><span>[rng.</span><span style="color:#b39f04;">gen</span><span>(), rng.</span><span style="color:#b39f04;">gen</span><span>(), rng.</span><span style="color:#b39f04;">gen</span><span>()];
+</span></code></pre>
+<p>The simplest method of creating an array is to explicitly set a value for each element. If this fits your use case, you should use it. Beyond that, there's not much to add here so let's move on.</p>
+<h2 id="t-n-where-t-copy">[T; N] where T: Copy</h2>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [</span><span style="color:#668f14;">u8</span><span>; </span><span style="color:#b3933a;">3</span><span>] </span><span style="color:#72ab00;">= </span><span>[</span><span style="color:#b3933a;">0</span><span>; </span><span style="color:#b3933a;">3</span><span>];
+</span><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [</span><span style="color:#a2a001;">Option</span><span>&lt;</span><span style="color:#668f14;">u8</span><span>&gt;; </span><span style="color:#b3933a;">3</span><span>] </span><span style="color:#72ab00;">= </span><span>[</span><span style="color:#a2a001;">None</span><span>; </span><span style="color:#b3933a;">3</span><span>];
+</span><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [</span><span style="color:#668f14;">u8</span><span>; </span><span style="color:#b3933a;">100000</span><span>] </span><span style="color:#72ab00;">= </span><span>[</span><span style="color:#b3933a;">0</span><span>; </span><span style="color:#b3933a;">100000</span><span>]; </span><span style="color:#7f8989;">// this works for any array size
+</span></code></pre>
+<p>If you need an array initialized with the same value repeated for each element, and the type of value contained in the array implements the Copy trait, Rust supports a shorthand syntax shown above.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [</span><span style="color:#668f14;">u8</span><span>; </span><span style="color:#b3933a;">3</span><span>] </span><span style="color:#72ab00;">= </span><span>[rng.</span><span style="color:#b39f04;">gen</span><span>(); </span><span style="color:#b3933a;">3</span><span>];
+</span></code></pre>
+<p>One important thing to note from this example is that the copy happens after the <code>rng.gen()</code> method is evaluated. This means that all three elements in this array contain the same value.</p>
+<h2 id="t-n-where-t-default-and-n-32">[T; N] where T: Default (and N &lt;= 32)</h2>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">let</span><span> x: [</span><span style="color:#a2a001;">Option</span><span>&lt;</span><span style="color:#a2a001;">String</span><span>&gt;; </span><span style="color:#b3933a;">3</span><span>] </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">Default</span><span>::default();
+</span><span style="color:#a2a001;">assert_eq!</span><span>(
+</span><span>    [</span><span style="color:#a2a001;">None</span><span>, </span><span style="color:#a2a001;">None</span><span>, </span><span style="color:#a2a001;">None</span><span>],
+</span><span>    x
+</span><span>);
+</span></code></pre>
+<p>A very common use case is initializing an array with <code>None</code>. While this can be done using <code>[None; N]</code> for <code>Option&lt;T&gt;</code> where <code>T</code> implements the copy trait, if <code>T</code> does not implement copy you can fall back to using the default trait as shown above.</p>
+<p>The primary downside to this method is it only works for arrays up to size 32.</p>
+<h2 id="going-unsafe">Going unsafe</h2>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [</span><span style="color:#a2a001;">Option</span><span>&lt;</span><span style="color:#a2a001;">String</span><span>&gt;; </span><span style="color:#b3933a;">33</span><span>] </span><span style="color:#72ab00;">= </span><span style="color:#668f14;">unsafe </span><span>{
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> arr: [</span><span style="color:#a2a001;">Option</span><span>&lt;</span><span style="color:#a2a001;">String</span><span>&gt;; </span><span style="color:#b3933a;">33</span><span>] </span><span style="color:#72ab00;">= </span><span>std::mem::uninitialized();
+</span><span>    </span><span style="color:#72ab00;">for</span><span> item </span><span style="color:#72ab00;">in &amp;</span><span style="color:#668f14;">mut</span><span> arr[</span><span style="color:#72ab00;">..</span><span>] {
+</span><span>        std::ptr::write(item, </span><span style="color:#a2a001;">None</span><span>);
+</span><span>    }
+</span><span>    arr
+</span><span>};
+</span></code></pre>
+<p>The <a href="https://doc.rust-lang.org/std/mem/fn.uninitialized.html">common approach</a> for initializing arrays larger than 32 elements, or containing types which do not implement the default trait, is shown above. A simple demonstration of how this could be unsafe follows:</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">fn </span><span style="color:#c23f31;">builder</span><span>(</span><span style="color:#5597d6;">rng</span><span>: </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut </span><span>rand::prelude::ThreadRng) -&gt; </span><span style="color:#a2a001;">Option</span><span>&lt;</span><span style="color:#a2a001;">String</span><span>&gt; {
+</span><span>    </span><span style="color:#7f8989;">// do anything here, potentially even panic
+</span><span>    </span><span style="color:#72ab00;">if</span><span> rng.gen::&lt;</span><span style="color:#668f14;">u8</span><span>&gt;() </span><span style="color:#72ab00;">&gt; </span><span style="color:#b3933a;">254</span><span style="color:#668f14;">u8 </span><span>{
+</span><span>        </span><span style="color:#a2a001;">panic!</span><span>(</span><span style="color:#d07711;">&quot;Builder failed&quot;</span><span>);
+</span><span>    }
+</span><span>    </span><span style="color:#a2a001;">None
+</span><span>}
+</span><span style="color:#668f14;">let mut</span><span> rng </span><span style="color:#72ab00;">= </span><span>rand::thread_rng();
+</span><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [</span><span style="color:#a2a001;">Option</span><span>&lt;</span><span style="color:#a2a001;">String</span><span>&gt;; </span><span style="color:#b3933a;">33</span><span>] </span><span style="color:#72ab00;">= </span><span style="color:#668f14;">unsafe </span><span>{
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> arr: [</span><span style="color:#a2a001;">Option</span><span>&lt;</span><span style="color:#a2a001;">String</span><span>&gt;; </span><span style="color:#b3933a;">33</span><span>] </span><span style="color:#72ab00;">= </span><span>std::mem::uninitialized();
+</span><span>    </span><span style="color:#72ab00;">for</span><span> item </span><span style="color:#72ab00;">in</span><span> arr.</span><span style="color:#b39f04;">iter_mut</span><span>() {
+</span><span>        std::ptr::write(item, </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng));
+</span><span>    }
+</span><span>    arr
+</span><span>};
+</span></code></pre>
+<p>If the builder method panics partway though initializing the array, the array will be dropped, triggering a drop of each element of the array. But some of the array elements will not yet be initialized, and calling drop on uninitialized memory is undefined behavior.</p>
+<p>Beyond that issue there are further problems with <code>mem::uninitialized</code>, which have led to it being deprecated in favor of <code>mem::MaybeUninit::uninitialized</code>, although there isn't yet consensus on <a href="https://github.com/rust-lang/rust/issues/54542">how to safely initialize an array with MaybeUninit</a>.</p>
+<h3 id="update-for-rust-1-36">Update for Rust 1.36</h3>
+<p>MaybeUninit was stabilized in Rust 1.36, and <code>mem::uninitialized</code> will be deprecated as of Rust 1.38. The <a href="https://doc.rust-lang.org/stable/std/mem/union.MaybeUninit.html">MaybeUninit docs</a> include an example of array initialization, which I'll provide an abbreviated copy of below.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">let</span><span> data </span><span style="color:#72ab00;">= </span><span>{
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> data: [std::mem::MaybeUninit&lt;</span><span style="color:#a2a001;">Vec</span><span>&lt;</span><span style="color:#668f14;">u32</span><span>&gt;&gt;; </span><span style="color:#b3933a;">1000</span><span>] </span><span style="color:#72ab00;">= </span><span style="color:#668f14;">unsafe </span><span>{
+</span><span>        std::mem::MaybeUninit::uninit().</span><span style="color:#b39f04;">assume_init</span><span>()
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#72ab00;">for</span><span> elem </span><span style="color:#72ab00;">in &amp;</span><span style="color:#668f14;">mut</span><span> data[</span><span style="color:#72ab00;">..</span><span>] {
+</span><span>        </span><span style="color:#668f14;">unsafe </span><span>{ std::ptr::write(elem.</span><span style="color:#b39f04;">as_mut_ptr</span><span>(), </span><span style="color:#a2a001;">vec!</span><span>[</span><span style="color:#b3933a;">42</span><span>]); }
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#668f14;">unsafe </span><span>{ std::mem::transmute::&lt;</span><span style="color:#72ab00;">_</span><span>, [</span><span style="color:#a2a001;">Vec</span><span>&lt;</span><span style="color:#668f14;">u32</span><span>&gt;; </span><span style="color:#b3933a;">1000</span><span>]&gt;(data) }
+</span><span>};
+</span><span>
+</span><span style="color:#a2a001;">assert_eq!</span><span>(</span><span style="color:#72ab00;">&amp;</span><span>data[</span><span style="color:#b3933a;">0</span><span>], </span><span style="color:#72ab00;">&amp;</span><span>[</span><span style="color:#b3933a;">42</span><span>]);
+</span></code></pre>
+<h2 id="back-to-safety">Back to safety</h2>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [</span><span style="color:#a2a001;">Option</span><span>&lt;</span><span style="color:#a2a001;">String</span><span>&gt;; </span><span style="color:#b3933a;">33</span><span>] </span><span style="color:#72ab00;">= </span><span>[
+</span><span>    </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng),
+</span><span>    </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng),
+</span><span>    </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng),
+</span><span>    </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng),
+</span><span>    </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng),
+</span><span>    </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng),
+</span><span>    </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng),
+</span><span>    </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng), </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng),
+</span><span>    </span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng)
+</span><span>];
+</span></code></pre>
+<p>It may not be fun to write, but the unsafe block in the section above can be replaced entirely with safe Rust.</p>
+<h2 id="introducing-arr">Introducing arr!</h2>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>arr_macro::arr;
+</span><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [</span><span style="color:#a2a001;">Option</span><span>&lt;</span><span style="color:#a2a001;">String</span><span>&gt;; </span><span style="color:#b3933a;">33</span><span>] </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">arr!</span><span>[</span><span style="color:#b39f04;">builder</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rng); </span><span style="color:#b3933a;">33</span><span>];
+</span></code></pre>
+<p>With a function-like procedural macro, we can have the best of both worlds (safety and concise code). I created a crate, <a href="https://github.com/JoshMcguigan/arr_macro">arr_macro</a>, which does exactly this using 100% safe Rust.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">enum </span><span style="color:#c23f31;">MyEnum </span><span>{
+</span><span>    A,
+</span><span>    B
+</span><span>}
+</span><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [MyEnum; </span><span style="color:#b3933a;">33</span><span>] </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">arr!</span><span>[MyEnum::A; </span><span style="color:#b3933a;">33</span><span>];
+</span></code></pre>
+<p>It works with all enum types (implementing copy/default is not required).</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#5597d6;">derive</span><span>(Debug)]
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">MyStruct </span><span>{
+</span><span>    </span><span style="color:#5597d6;">member</span><span>: </span><span style="color:#668f14;">u16</span><span>,
+</span><span>}
+</span><span style="color:#668f14;">impl </span><span style="color:#c23f31;">MyStruct </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">new</span><span>(</span><span style="color:#5597d6;">member</span><span>: </span><span style="color:#668f14;">u16</span><span>) -&gt; </span><span style="color:#668f14;">Self </span><span>{
+</span><span>        MyStruct { member }
+</span><span>    }
+</span><span>}
+</span><span style="color:#668f14;">let mut</span><span> i </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span style="color:#668f14;">u16</span><span>;
+</span><span style="color:#668f14;">let</span><span> x: [MyStruct; </span><span style="color:#b3933a;">33</span><span>] </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">arr!</span><span>[MyStruct::new({i </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>; i </span><span style="color:#72ab00;">- </span><span style="color:#b3933a;">1</span><span>}); </span><span style="color:#b3933a;">33</span><span>];
+</span><span>
+</span><span style="color:#a2a001;">assert_eq!</span><span>(</span><span style="color:#b3933a;">0</span><span>, x[</span><span style="color:#b3933a;">0</span><span>].member);
+</span><span style="color:#a2a001;">assert_eq!</span><span>(</span><span style="color:#b3933a;">1</span><span>, x[</span><span style="color:#b3933a;">1</span><span>].member);
+</span><span style="color:#a2a001;">assert_eq!</span><span>(</span><span style="color:#b3933a;">2</span><span>, x[</span><span style="color:#b3933a;">2</span><span>].member);
+</span></code></pre>
+<p>You can even use it with a counter to initialize each array element to a different value.</p>
+<h4 id="nightly-required">Nightly Required</h4>
+<p><del><code>arr_macro</code> requires nightly Rust in order to enable the <code>proc_macro_hygiene</code> feature.</del></p>
+<p>Update - Thanks to <a href="https://github.com/JoshMcguigan/arr_macro/pull/1">this PR</a> by <a href="https://github.com/dtolnay">David Tolnay</a>, <code>arr_macro</code> now works on stable! If your procedural macro crate requires nightly due to <code>proc_macro_hygiene</code>, check out his crate <a href="https://github.com/dtolnay/proc-macro-hack">proc-macro-hack</a>.</p>
+<h2 id="prior-art">Prior Art</h2>
+<p>There are several other crates which solve this problem, each with their own trade-offs.</p>
+<h4 id="array-init">array-init</h4>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>array_init::array_init;
+</span><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [MyStruct; </span><span style="color:#b3933a;">512</span><span>] </span><span style="color:#72ab00;">= </span><span style="color:#b39f04;">array_init</span><span>(|</span><span style="color:#5597d6;">i</span><span>| MyStruct::new(i </span><span style="color:#72ab00;">as </span><span style="color:#668f14;">u16</span><span>));
+</span></code></pre>
+<ul>
+<li>https://github.com/Manishearth/array-init</li>
+<li>uses unsafe Rust internally</li>
+<li>works for arrays up to size 512</li>
+<li>Nice syntax, but further from the normal [T; N]</li>
+</ul>
+<h4 id="init-with-rs">init-with-rs</h4>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>init_with::InitWith;
+</span><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [MyStruct; </span><span style="color:#b3933a;">32</span><span>] </span><span style="color:#72ab00;">= </span><span>&lt;[MyStruct; </span><span style="color:#b3933a;">32</span><span>]&gt;::init_with_indices(|</span><span style="color:#5597d6;">i</span><span>| MyStruct::new(i </span><span style="color:#72ab00;">as </span><span style="color:#668f14;">u16</span><span>));
+</span></code></pre>
+<ul>
+<li>https://github.com/QuietMisdreavus/init-with-rs</li>
+<li>100% safe Rust internally</li>
+<li>works for arrays up to size 32</li>
+<li>Nice syntax, but further from the normal [T; N]</li>
+</ul>
+<h4 id="array-macro">array-macro</h4>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>array_macro::array;
+</span><span style="color:#668f14;">let mut</span><span> i </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span style="color:#668f14;">u16</span><span>;
+</span><span style="color:#668f14;">let </span><span style="color:#72ab00;">_</span><span>: [MyStruct; </span><span style="color:#b3933a;">33</span><span>] </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">array!</span><span>[MyStruct::new({i </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>; i </span><span style="color:#72ab00;">- </span><span style="color:#b3933a;">1</span><span>}); </span><span style="color:#b3933a;">33</span><span>];
+</span></code></pre>
+<ul>
+<li>https://github.com/xfix/array-macro</li>
+<li>uses unsafe Rust internally</li>
+<li>works for any array size</li>
+</ul>
+<h4 id="general-thoughts-on-the-prior-art">General thoughts on the prior art</h4>
+<ul>
+<li>In the case of initializing an array with non-constant values, as demonstrated in the examples, using a syntax further from <code>[T; N]</code> may actually be considered a benefit rather than a drawback. This syntactical difference would make it easier to differentiate a copy initialization from an initialization which evaluates an initialization function several times.</li>
+<li>Many high quality crates provide safe wrappers around unsafe code, but in this case there is <a href="https://www.reddit.com/r/rust/comments/95vxdy/understanding_ub_with_stdmemuninitialized/">some debate</a> over whether any use of <code>std::mem::uninitialized</code> can be considered safe.</li>
+<li>In practice, the array size limits of <code>array-init</code> and <code>init-with-rs</code> may not be a big deal for two reasons. First, arrays are stack allocated, so there is some practical limit to how large an array can be. Second, it is trivial to modify either crate to work with larger array sizes.</li>
+</ul>
+<h2 id="future-work">Future Work</h2>
+<p>It is my hope that solutions to these problems will be pulled in to the Rust language / standard library as appropriate. There is an approved RFC for supporting <a href="https://github.com/rust-lang/rust/issues/49147">constants in array repeat expressions</a>. That solves the common use case of <code>[None; N]</code>, but it does not resolve the non-constant use case (as expressed above with the examples using <code>MyStruct</code>). Perhaps the <a href="https://github.com/rust-lang/rust/issues/53491">work being done on the MaybeUninit type</a> could be extended to solve that use case?</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>That something as pedestrian as array initialization could lead us down a path of such complexity suggests to me that this is one of the remaining rough edges of the Rust language. Indeed there are at least two approved RFCs in progress to improve things in this area. I look forward to the new language/standard library features which will eventually obsolete all of the workarounds above.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

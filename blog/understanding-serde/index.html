@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Understanding Serde</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Understanding Serde</h1>
+
+<p class="subtitle">2019-11-17</p>
+
+<p>Serde is one of the most popular Rust crates, and deservedly so. If you aren't familiar, Serde describes itself as "a framework for serializing and deserializing Rust data structures efficiently and generically." What is most impressive to me is how robust the Serde data model has proven to be, allowing it to support human readable protocols like JSON and YAML, but also binary formats like Bincode. Its really a bonus that Serde does this while remaining exceptionally performant.</p>
+<p>This blog posts dives into how Serde (along with the ecosystem of Serde data formats) is able to pull this off. To limit the scope of this post I am going to focus on Serde serialization to JSON, and skip any discussion of deserialization. If you are interested in deserialization (or a different data format) I believe you will be able to perform a similar analysis yourself after reading this post.</p>
+<h2 id="the-serde-data-model">The Serde Data Model</h2>
+<p>One of the things I like to do when I am first trying to reason about a new library is to think about how I might go about implementing it. Sometimes the method I think up is reasonably close, and other times I miss the mark fundamentally. This was a case of the latter, but I think it is educational to present anyway.</p>
+<p>After reading about the <a href="https://serde.rs/data-model.html">Serde data model</a>, which is described as "the API by which data structures and data formats interact", I was developing roughly the following mental model of how Serde might work.</p>
+<pre style="background-color:#f5f5f5;color:#1f1f1f;"><code><span>Rust structure 
+</span><span>  ↓
+</span><span>  -- Serialize --&gt; Structure in terms of the Serde data model
+</span><span>  ↓
+</span><span>  -- Data format (JSON/Bincode/etc) --&gt; Convert the Serde data model to the output format
+</span></code></pre>
+<p>I've included some real Serde example code below, to set some context before diving deeper into how I thought this might be implemented.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>serde::{Serialize, Deserialize};
+</span><span>
+</span><span>#[</span><span style="color:#5597d6;">derive</span><span>(Serialize, Deserialize, Debug)]
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">Point </span><span>{
+</span><span>    </span><span style="color:#5597d6;">x</span><span>: </span><span style="color:#668f14;">i32</span><span>,
+</span><span>    </span><span style="color:#5597d6;">y</span><span>: </span><span style="color:#668f14;">i32</span><span>,
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() {
+</span><span>    </span><span style="color:#668f14;">let</span><span> point </span><span style="color:#72ab00;">=</span><span> Point { x: </span><span style="color:#b3933a;">1</span><span>, y: </span><span style="color:#b3933a;">2 </span><span>};
+</span><span>
+</span><span>    </span><span style="color:#7f8989;">// Convert the Point to a JSON string.
+</span><span>    </span><span style="color:#668f14;">let</span><span> serialized </span><span style="color:#72ab00;">= </span><span>serde_json::to_string(</span><span style="color:#72ab00;">&amp;</span><span>point).</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#7f8989;">// Prints serialized = {&quot;x&quot;:1,&quot;y&quot;:2}
+</span><span>    </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;serialized = </span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, serialized);
+</span><span>}
+</span></code></pre>
+<p>Mapping my mental model to this example, I expected <code>#[derive(Serialize)]</code> would output some code like:</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">impl </span><span>Serialize </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">Point </span><span>{
+</span><span>	</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">serialize</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>) -&gt; SerdeDataModel {
+</span><span>		</span><span style="color:#72ab00;">...
+</span><span>	}
+</span><span>}
+</span></code></pre>
+<p>Then I expected <code>serde_json::to_string</code> to look roughly like:</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">fn </span><span style="color:#c23f31;">to_string</span><span>&lt;T&gt;(</span><span style="color:#5597d6;">input</span><span>: T) -&gt; String
+</span><span>	</span><span style="color:#72ab00;">where</span><span> T: Serialize
+</span><span>{
+</span><span>	</span><span style="color:#668f14;">let</span><span> serde_data_model </span><span style="color:#72ab00;">=</span><span> input.</span><span style="color:#b39f04;">serialize</span><span>();
+</span><span>
+</span><span>	</span><span style="color:#668f14;">let mut</span><span> output </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">String</span><span>::new();
+</span><span>
+</span><span>	</span><span style="color:#7f8989;">// code which traverses the Serde data model
+</span><span>	</span><span style="color:#7f8989;">// representation and builds the JSON
+</span><span>	</span><span style="color:#72ab00;">for</span><span> elem </span><span style="color:#72ab00;">in</span><span> serde_data_model {
+</span><span>		</span><span style="color:#72ab00;">match</span><span> elem {
+</span><span>			</span><span style="color:#668f14;">struct</span><span>(content) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#7f8989;">//.. serialize the struct into JSON
+</span><span>			</span><span style="color:#72ab00;">_ =&gt; </span><span style="color:#7f8989;">// handle all other types in the Serde data model	
+</span><span>		}
+</span><span>	}
+</span><span>
+</span><span>	output
+</span><span>}
+</span></code></pre>
+<p>I was starting to feel comfortable with this idea, so I dove into the source to see how close I was. I wanted to start by finding the definition of the Serde data model, which I expected would be a large enum. As you can probably guess, I was not able to find that enum because it doesn't actually exist.</p>
+<h2 id="into-the-code">Into the Code</h2>
+<p>Unable to confirm my suspicions about how Serde might work, I did try to peek through the code a bit to see if things would start making sense. But the Serde code base makes heavy use of generics (for good reason) and jumps rapidly between the Serde crate, the Serde data format crate, and code generated by the Serde derive macros, so I had a hard time making sense of it. At that time I moved to my second technique for understanding library code: pick an entry point into the library that I am familiar with as a user, and trace a code path through the library starting at that entry point.</p>
+<p>Sticking with the example above, lets start with <code>serde_json::to_string</code>.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#7f8989;">// https://github.com/serde-rs/json/blob/10132f800fd1223ac698fa8c41b201dca152c413/src/ser.rs
+</span><span style="color:#7f8989;">// crate: serde_json
+</span><span>
+</span><span style="color:#668f14;">pub fn </span><span style="color:#c23f31;">to_writer</span><span>&lt;W, T: </span><span style="background-color:#562d56bf;color:#f8f8f8;">?</span><span style="color:#a2a001;">Sized</span><span style="color:#72ab00;">&gt;</span><span>(writer: W, value: </span><span style="color:#72ab00;">&amp;</span><span>T) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;()&gt;
+</span><span style="color:#72ab00;">where
+</span><span>    W: io::Write,
+</span><span>    T: Serialize,
+</span><span>{
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> ser </span><span style="color:#72ab00;">= </span><span>Serializer::new(writer);
+</span><span>    </span><span style="color:#a2a001;">try!</span><span>(value.</span><span style="color:#b39f04;">serialize</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> ser));
+</span><span>    </span><span style="color:#a2a001;">Ok</span><span>(())
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">pub fn </span><span style="color:#c23f31;">to_vec</span><span>&lt;T: </span><span style="background-color:#562d56bf;color:#f8f8f8;">?</span><span style="color:#a2a001;">Sized</span><span style="color:#72ab00;">&gt;</span><span>(value: </span><span style="color:#72ab00;">&amp;</span><span>T) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;</span><span style="color:#a2a001;">Vec</span><span>&lt;</span><span style="color:#668f14;">u8</span><span>&gt;&gt;
+</span><span style="color:#72ab00;">where
+</span><span>    T: Serialize,
+</span><span>{
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> writer </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">Vec</span><span>::with_capacity(</span><span style="color:#b3933a;">128</span><span>);
+</span><span>    </span><span style="color:#a2a001;">try!</span><span>(</span><span style="color:#b39f04;">to_writer</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> writer, value));
+</span><span>    </span><span style="color:#a2a001;">Ok</span><span>(writer)
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">pub fn </span><span style="color:#c23f31;">to_string</span><span>&lt;T: </span><span style="background-color:#562d56bf;color:#f8f8f8;">?</span><span style="color:#a2a001;">Sized</span><span style="color:#72ab00;">&gt;</span><span>(value: </span><span style="color:#72ab00;">&amp;</span><span>T) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;</span><span style="color:#a2a001;">String</span><span>&gt;
+</span><span style="color:#72ab00;">where
+</span><span>    T: Serialize,
+</span><span>{
+</span><span>    </span><span style="color:#668f14;">let</span><span> vec </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">try!</span><span>(</span><span style="color:#b39f04;">to_vec</span><span>(value));
+</span><span>    </span><span style="color:#668f14;">let</span><span> string </span><span style="color:#72ab00;">= </span><span style="color:#668f14;">unsafe </span><span>{
+</span><span>        </span><span style="color:#7f8989;">// We do not emit invalid UTF-8.
+</span><span>        </span><span style="color:#a2a001;">String</span><span>::from_utf8_unchecked(vec)
+</span><span>    };
+</span><span>    </span><span style="color:#a2a001;">Ok</span><span>(string)
+</span><span>}
+</span></code></pre>
+<p><code>serde_json</code> provides a number of entry points depending on exactly how you plan to use the resulting JSON. In our case we wanted to trace the <code>to_string</code> path, but we can quickly see that it just dispatches to <code>to_vec</code>, which itself dispatches to <code>to_writer</code>, which is where the first interesting work happens.</p>
+<p>A <code>Serializer</code> is created, which takes ownership of an <code>io::Write</code> (which is really an <code>&amp;mut Vec&lt;u8&gt;</code> in our case. Then a mutable reference to that <code>Serializer</code> is passed to the <code>serialize</code> method on our <code>Point</code> struct with <code>value.serialize(&amp;mut ser)</code>.</p>
+<p>The <code>serialize</code> method is part of the <code>Serialize</code> trait. The trait definition is in <a href="https://github.com/serde-rs/serde/blob/4eb580790dd6c96089b92942a5f481b21df4feaf/serde/src/ser/mod.rs#L246">the Serde crate</a>, but right now I'm interested in the trait implementation for our <code>Point</code> struct, which is generated because of the <code>#[derive(Serialize)]</code> attribute. Using <a href="https://github.com/dtolnay/cargo-expand">cargo-expand</a> allows you to see the output of the derive macro.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#7f8989;">// crate: Sample application
+</span><span style="color:#7f8989;">// Code generated by the #[derive(Serialize)] macro
+</span><span>
+</span><span style="color:#72ab00;">use </span><span>serde::{Serialize, Serializer, ser::SerializeStruct};
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>serde::Serialize </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">Point </span><span>{
+</span><span>	</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">serialize</span><span>&lt;S&gt;(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">serializer</span><span>: S) -&gt; serde::export::</span><span style="color:#a2a001;">Result</span><span>&lt;</span><span style="color:#668f14;">S::</span><span style="color:#a2a001;">Ok</span><span>, </span><span style="color:#668f14;">S::</span><span>Error&gt;
+</span><span>	</span><span style="color:#72ab00;">where
+</span><span>		S: Serializer,
+</span><span>	{
+</span><span>		</span><span style="color:#668f14;">let mut</span><span> serde_state </span><span style="color:#72ab00;">= match </span><span>Serializer::serialize_struct(
+</span><span>			serializer,
+</span><span>			</span><span style="color:#d07711;">&quot;Point&quot;</span><span>,
+</span><span>			</span><span style="color:#b3933a;">false </span><span style="color:#72ab00;">as </span><span style="color:#668f14;">usize </span><span style="color:#72ab00;">+ </span><span style="color:#b3933a;">1 </span><span style="color:#72ab00;">+ </span><span style="color:#b3933a;">1</span><span>,
+</span><span>		) {
+</span><span>			serde::export::Ok(val) </span><span style="color:#72ab00;">=&gt;</span><span> val,
+</span><span>			serde::export::Err(err) </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>				</span><span style="color:#72ab00;">return </span><span>serde::export::Err(err);
+</span><span>			}
+</span><span>		};
+</span><span>		</span><span style="color:#72ab00;">match </span><span>SerializeStruct::serialize_field(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> serde_state, </span><span style="color:#d07711;">&quot;x&quot;</span><span>, </span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>.x) {
+</span><span>			serde::export::Ok(val) </span><span style="color:#72ab00;">=&gt;</span><span> val,
+</span><span>			serde::export::Err(err) </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>				</span><span style="color:#72ab00;">return </span><span>serde::export::Err(err);
+</span><span>			}
+</span><span>		};
+</span><span>		</span><span style="color:#72ab00;">match </span><span>SerializeStruct::serialize_field(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> serde_state, </span><span style="color:#d07711;">&quot;y&quot;</span><span>, </span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>.y) {
+</span><span>			serde::export::Ok(val) </span><span style="color:#72ab00;">=&gt;</span><span> val,
+</span><span>			serde::export::Err(err) </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>				</span><span style="color:#72ab00;">return </span><span>serde::export::Err(err);
+</span><span>			}
+</span><span>		};
+</span><span>		SerializeStruct::end(serde_state)
+</span><span>	}
+</span><span>}
+</span></code></pre>
+<p>Before diving into this code, I want to note that I did modify it a small amount to improve readability. Serde uses several tricks to ensure that the code it generates works in all environments. While those tricks are interesting, they are not the focus of today's investigation.</p>
+<p>There is one trick I did leave in place however, and that is the way Serde calls trait methods. You can see this in the very first line of the method where <code>Serializer::serialize_struct</code> is called and <code>serializer</code> is passed in, as oppposed to the more common <code>serializer.serialize_struct</code>. This disambiguates the <code>Serializer::serialize_struct</code> method from any other <code>serialize_struct</code> method which may exist, and I left it in place because changing it felt like it moved the demo code too far away from the actual code.</p>
+<p>Getting back to our analysis now, we were tracing the call in <code>serde_json</code> to <code>&amp;point.serialize(&amp;mut serializer)</code> where <code>serializer</code> is a <code>serde_json</code> specific implementation of the <code>Serializer</code> trait. The first thing that happens in this function is it calls the <code>serialize_struct</code> method on the serializer, passing it some information about this struct (the name and the number of fields in the struct). If you are familiar with other programming languages, you may recognize this information as things you could get from a type at runtime via reflection. The <code>#[derive(Serialize)]</code> macro exists basically as a high performance work around to the fact that this type information isn't available at runtime in Rust.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#7f8989;">// https://github.com/serde-rs/json/blob/10132f800fd1223ac698fa8c41b201dca152c413/src/ser.rs#L427
+</span><span style="color:#7f8989;">// crate: serde-json
+</span><span style="color:#668f14;">impl </span><span>serde::Serialize </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">Serializer </span><span>{
+</span><span>	</span><span style="color:#7f8989;">// ..many methods omitted
+</span><span>
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">serialize_struct</span><span>(</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">name</span><span>: </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">&#39;static str</span><span>, </span><span style="color:#5597d6;">len</span><span>: </span><span style="color:#668f14;">usize</span><span>) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;</span><span style="color:#668f14;">Self::</span><span>SerializeStruct&gt; {
+</span><span>        </span><span style="color:#72ab00;">match</span><span> name {
+</span><span>            </span><span style="color:#72ab00;">_ =&gt; </span><span style="color:#5597d6;">self</span><span>.</span><span style="color:#b39f04;">serialize_map</span><span>(</span><span style="color:#a2a001;">Some</span><span>(len)),
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>As you are likely aware, JSON does not have any way to serialize a named struct, so the <code>serialize_struct</code> method on the <code>serde_json</code> <code>Serializer</code> simply dispatches to <code>self.serialize_map</code>.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#7f8989;">// https://github.com/serde-rs/json/blob/10132f800fd1223ac698fa8c41b201dca152c413/src/ser.rs#L394
+</span><span style="color:#7f8989;">// crate: serde-json
+</span><span style="color:#668f14;">impl </span><span>serde::Serialize </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">Serializer </span><span>{
+</span><span>	</span><span style="color:#7f8989;">// ..many methods omitted
+</span><span>
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">serialize_map</span><span>(</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">len</span><span>: </span><span style="color:#a2a001;">Option</span><span>&lt;</span><span style="color:#668f14;">usize</span><span>&gt;) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;</span><span style="color:#668f14;">Self::</span><span>SerializeMap&gt; {
+</span><span>        </span><span style="color:#72ab00;">if</span><span> len </span><span style="color:#72ab00;">== </span><span style="color:#a2a001;">Some</span><span>(</span><span style="color:#b3933a;">0</span><span>) {
+</span><span>			</span><span style="color:#7f8989;">// .. omitted code to build an empty JSON object &#39;{}&#39;
+</span><span>        } </span><span style="color:#72ab00;">else </span><span>{
+</span><span>            </span><span style="color:#a2a001;">try!</span><span>(</span><span style="color:#5597d6;">self
+</span><span>                .formatter
+</span><span>                .</span><span style="color:#b39f04;">begin_object</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut </span><span style="color:#5597d6;">self</span><span>.writer)
+</span><span>                .</span><span style="color:#b39f04;">map_err</span><span>(Error::io));
+</span><span>            </span><span style="color:#a2a001;">Ok</span><span>(Compound::Map {
+</span><span>                ser: </span><span style="color:#5597d6;">self</span><span>,
+</span><span>                state: State::First,
+</span><span>            })
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#7f8989;">// https://github.com/serde-rs/json/blob/10132f800fd1223ac698fa8c41b201dca152c413/src/ser.rs#L1852
+</span><span style="color:#668f14;">trait </span><span style="color:#c23f31;">Formatter </span><span>{
+</span><span>	</span><span style="color:#7f8989;">// ..many methods omitted
+</span><span>
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">begin_object</span><span>&lt;W: </span><span style="background-color:#562d56bf;color:#f8f8f8;">?</span><span style="color:#a2a001;">Sized</span><span style="color:#72ab00;">&gt;</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut </span><span style="color:#5597d6;">self</span><span>, writer: </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> W) -&gt; io::</span><span style="color:#a2a001;">Result</span><span>&lt;()&gt;
+</span><span>    </span><span style="color:#72ab00;">where
+</span><span>        W: io::Write,
+</span><span>    {
+</span><span>        writer.</span><span style="color:#b39f04;">write_all</span><span>(</span><span style="color:#668f14;">b</span><span style="color:#d07711;">&quot;{&quot;</span><span>)
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>A keen eye may have noticed that when we called <code>serialize_map</code> we passed in the number of fields in the struct. This is a bit odd since JSON doesn't need this information for serialization, and indeed we can see now that unless the length is zero the length information is ignored.</p>
+<p>We are now ready to serialize our first byte. <code>self.formatter.begin_object</code> takes a mutable reference to our <code>Vec&lt;u8&gt;</code> and writes a single character, the open curly brace, which represents the start of a JSON map.</p>
+<p>The <code>serialize_map</code> method finishes by creating a <code>Compound::Map</code> which stores the serializer itself as well as a state enum with the value <code>State::First</code>. The important thing is that this return type implements the <a href="https://github.com/serde-rs/serde/blob/4eb580790dd6c96089b92942a5f481b21df4feaf/serde/src/ser/mod.rs#L1865">serde::ser::SerializeStruct trait</a>.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#7f8989;">// crate: Sample application
+</span><span style="color:#7f8989;">// Code generated by the #[derive(Serialize)] macro
+</span><span style="color:#7f8989;">// Repeated from above for clarity
+</span><span>
+</span><span style="color:#72ab00;">use </span><span>serde::{Serialize, Serializer, ser::SerializeStruct};
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>serde::Serialize </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">Point </span><span>{
+</span><span>	</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">serialize</span><span>&lt;S&gt;(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">serializer</span><span>: S) -&gt; serde::export::</span><span style="color:#a2a001;">Result</span><span>&lt;</span><span style="color:#668f14;">S::</span><span style="color:#a2a001;">Ok</span><span>, </span><span style="color:#668f14;">S::</span><span>Error&gt;
+</span><span>	</span><span style="color:#72ab00;">where
+</span><span>		S: Serializer,
+</span><span>	{
+</span><span>		</span><span style="color:#668f14;">let mut</span><span> serde_state </span><span style="color:#72ab00;">= match </span><span>Serializer::serialize_struct(
+</span><span>			serializer,
+</span><span>			</span><span style="color:#d07711;">&quot;Point&quot;</span><span>,
+</span><span>			</span><span style="color:#b3933a;">false </span><span style="color:#72ab00;">as </span><span style="color:#668f14;">usize </span><span style="color:#72ab00;">+ </span><span style="color:#b3933a;">1 </span><span style="color:#72ab00;">+ </span><span style="color:#b3933a;">1</span><span>,
+</span><span>		) {
+</span><span>			serde::export::Ok(val) </span><span style="color:#72ab00;">=&gt;</span><span> val,
+</span><span>			serde::export::Err(err) </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>				</span><span style="color:#72ab00;">return </span><span>serde::export::Err(err);
+</span><span>			}
+</span><span>		};
+</span><span>		</span><span style="color:#72ab00;">match </span><span>SerializeStruct::serialize_field(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> serde_state, </span><span style="color:#d07711;">&quot;x&quot;</span><span>, </span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>.x) {
+</span><span>			serde::export::Ok(val) </span><span style="color:#72ab00;">=&gt;</span><span> val,
+</span><span>			serde::export::Err(err) </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>				</span><span style="color:#72ab00;">return </span><span>serde::export::Err(err);
+</span><span>			}
+</span><span>		};
+</span><span>		</span><span style="color:#72ab00;">match </span><span>SerializeStruct::serialize_field(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> serde_state, </span><span style="color:#d07711;">&quot;y&quot;</span><span>, </span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>.y) {
+</span><span>			serde::export::Ok(val) </span><span style="color:#72ab00;">=&gt;</span><span> val,
+</span><span>			serde::export::Err(err) </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>				</span><span style="color:#72ab00;">return </span><span>serde::export::Err(err);
+</span><span>			}
+</span><span>		};
+</span><span>		SerializeStruct::end(serde_state)
+</span><span>	}
+</span><span>}
+</span></code></pre>
+<p>Popping off the stack now we are back to our <code>serde::Serialize</code> impl for <code>Point</code>, which I've repeated here for clarity. We now know <code>serde_state</code> is a <code>Compound::Map</code> from <code>serde-json</code>. Up next are two calls to <code>serialize_field</code> and then a call to <code>end</code>.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#7f8989;">// https://github.com/serde-rs/json/blob/10132f800fd1223ac698fa8c41b201dca152c413/src/ser.rs#L755
+</span><span style="color:#7f8989;">// crate: serde-json
+</span><span>
+</span><span style="color:#668f14;">impl</span><span>&lt;</span><span style="color:#668f14;">&#39;a</span><span>, W, F&gt; ser::SerializeStruct </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">Compound</span><span>&lt;</span><span style="color:#668f14;">&#39;a</span><span>, W, F&gt;
+</span><span style="color:#72ab00;">where
+</span><span>    W: io::Write,
+</span><span>    F: Formatter,
+</span><span>{
+</span><span>    </span><span style="color:#668f14;">type </span><span style="color:#c23f31;">Ok </span><span style="color:#72ab00;">= </span><span>();
+</span><span>    </span><span style="color:#668f14;">type </span><span style="color:#c23f31;">Error </span><span style="color:#72ab00;">=</span><span> Error;
+</span><span>
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">serialize_field</span><span>&lt;T: </span><span style="background-color:#562d56bf;color:#f8f8f8;">?</span><span style="color:#a2a001;">Sized</span><span style="color:#72ab00;">&gt;</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut </span><span style="color:#5597d6;">self</span><span>, key: </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">&#39;static str</span><span>, value: </span><span style="color:#72ab00;">&amp;</span><span>T) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;()&gt;
+</span><span>    </span><span style="color:#72ab00;">where
+</span><span>        T: Serialize,
+</span><span>    {
+</span><span>        </span><span style="color:#72ab00;">match *</span><span style="color:#5597d6;">self </span><span>{
+</span><span>            Compound::Map { </span><span style="color:#72ab00;">.. </span><span>} </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>                </span><span style="color:#a2a001;">try!</span><span>(ser::SerializeMap::serialize_key(</span><span style="color:#5597d6;">self</span><span>, key));
+</span><span>                ser::SerializeMap::serialize_value(</span><span style="color:#5597d6;">self</span><span>, value)
+</span><span>            }
+</span><span>			</span><span style="color:#7f8989;">// .. omitted other enum options
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">end</span><span>(</span><span style="color:#5597d6;">self</span><span>) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;()&gt; {
+</span><span>        </span><span style="color:#72ab00;">match </span><span style="color:#5597d6;">self </span><span>{
+</span><span>            Compound::Map { </span><span style="color:#72ab00;">.. </span><span>} </span><span style="color:#72ab00;">=&gt; </span><span>ser::SerializeMap::end(</span><span style="color:#5597d6;">self</span><span>),
+</span><span>			</span><span style="color:#7f8989;">// .. omitted other enum options
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>As with the <code>Serializer</code>, the <code>SerializeStruct</code> methods do nothing more than dispatch to the <code>SerializeMap</code> implementations.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#7f8989;">// https://github.com/serde-rs/json/blob/10132f800fd1223ac698fa8c41b201dca152c413/src/ser.rs#L673
+</span><span style="color:#7f8989;">// crate: serde-json
+</span><span>
+</span><span style="color:#668f14;">impl</span><span>&lt;</span><span style="color:#668f14;">&#39;a</span><span>, W, F&gt; ser::SerializeMap </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">Compound</span><span>&lt;</span><span style="color:#668f14;">&#39;a</span><span>, W, F&gt;
+</span><span style="color:#72ab00;">where
+</span><span>    W: io::Write,
+</span><span>    F: Formatter,
+</span><span>{
+</span><span>    </span><span style="color:#668f14;">type </span><span style="color:#c23f31;">Ok </span><span style="color:#72ab00;">= </span><span>();
+</span><span>    </span><span style="color:#668f14;">type </span><span style="color:#c23f31;">Error </span><span style="color:#72ab00;">=</span><span> Error;
+</span><span>
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">serialize_key</span><span>&lt;T: </span><span style="background-color:#562d56bf;color:#f8f8f8;">?</span><span style="color:#a2a001;">Sized</span><span style="color:#72ab00;">&gt;</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut </span><span style="color:#5597d6;">self</span><span>, key: </span><span style="color:#72ab00;">&amp;</span><span>T) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;()&gt;
+</span><span>    </span><span style="color:#72ab00;">where
+</span><span>        T: Serialize,
+</span><span>    {
+</span><span>        </span><span style="color:#72ab00;">match *</span><span style="color:#5597d6;">self </span><span>{
+</span><span>            Compound::Map {
+</span><span>                </span><span style="color:#668f14;">ref mut</span><span> ser,
+</span><span>                </span><span style="color:#668f14;">ref mut</span><span> state,
+</span><span>            } </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>                </span><span style="color:#a2a001;">try!</span><span>(ser
+</span><span>                    .formatter
+</span><span>                    .</span><span style="color:#b39f04;">begin_object_key</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> ser.writer, </span><span style="color:#72ab00;">*</span><span>state </span><span style="color:#72ab00;">== </span><span>State::First)
+</span><span>                    .</span><span style="color:#b39f04;">map_err</span><span>(Error::io));
+</span><span>                </span><span style="color:#72ab00;">*</span><span>state </span><span style="color:#72ab00;">= </span><span>State::Rest;
+</span><span>
+</span><span>                </span><span style="color:#a2a001;">try!</span><span>(key.</span><span style="color:#b39f04;">serialize</span><span>(MapKeySerializer { ser: </span><span style="color:#72ab00;">*</span><span>ser }));
+</span><span>
+</span><span>                </span><span style="color:#a2a001;">try!</span><span>(ser
+</span><span>                    .formatter
+</span><span>                    .</span><span style="color:#b39f04;">end_object_key</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> ser.writer)
+</span><span>                    .</span><span style="color:#b39f04;">map_err</span><span>(Error::io));
+</span><span>                </span><span style="color:#a2a001;">Ok</span><span>(())
+</span><span>            }
+</span><span>			</span><span style="color:#7f8989;">// .. omitted other enum options
+</span><span>		}
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">serialize_value</span><span>&lt;T: </span><span style="background-color:#562d56bf;color:#f8f8f8;">?</span><span style="color:#a2a001;">Sized</span><span style="color:#72ab00;">&gt;</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut </span><span style="color:#5597d6;">self</span><span>, value: </span><span style="color:#72ab00;">&amp;</span><span>T) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;()&gt;
+</span><span>    </span><span style="color:#72ab00;">where
+</span><span>        T: Serialize,
+</span><span>    {
+</span><span>        </span><span style="color:#72ab00;">match *</span><span style="color:#5597d6;">self </span><span>{
+</span><span>            Compound::Map { </span><span style="color:#668f14;">ref mut</span><span> ser, </span><span style="color:#72ab00;">.. </span><span>} </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>                </span><span style="color:#a2a001;">try!</span><span>(ser
+</span><span>                    .formatter
+</span><span>                    .</span><span style="color:#b39f04;">begin_object_value</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> ser.writer)
+</span><span>                    .</span><span style="color:#b39f04;">map_err</span><span>(Error::io));
+</span><span>                </span><span style="color:#a2a001;">try!</span><span>(value.</span><span style="color:#b39f04;">serialize</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut </span><span style="color:#72ab00;">**</span><span>ser));
+</span><span>                </span><span style="color:#a2a001;">try!</span><span>(ser
+</span><span>                    .formatter
+</span><span>                    .</span><span style="color:#b39f04;">end_object_value</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> ser.writer)
+</span><span>                    .</span><span style="color:#b39f04;">map_err</span><span>(Error::io));
+</span><span>                </span><span style="color:#a2a001;">Ok</span><span>(())
+</span><span>            }
+</span><span>			</span><span style="color:#7f8989;">// .. omitted other enum options
+</span><span>		}
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">end</span><span>(</span><span style="color:#5597d6;">self</span><span>) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;()&gt; {
+</span><span>        </span><span style="color:#72ab00;">match </span><span style="color:#5597d6;">self </span><span>{
+</span><span>            Compound::Map { ser, state } </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>                </span><span style="color:#72ab00;">match</span><span> state {
+</span><span>                    State::Empty </span><span style="color:#72ab00;">=&gt; </span><span>{}
+</span><span>                    </span><span style="color:#72ab00;">_ =&gt; </span><span style="color:#a2a001;">try!</span><span>(ser.formatter.</span><span style="color:#b39f04;">end_object</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> ser.writer).</span><span style="color:#b39f04;">map_err</span><span>(Error::io)),
+</span><span>                }
+</span><span>                </span><span style="color:#a2a001;">Ok</span><span>(())
+</span><span>            }
+</span><span>			</span><span style="color:#7f8989;">// .. omitted other enum options
+</span><span>		}
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>That is a big code block, so even though we will jump back to it a few times I am not going to duplicate it. Instead, from here on out, rather than inlining the code I'm just going to link to it. I encourage you to follow along by clicking through the links and reviewing the code nonetheless.</p>
+<p>We enter here though the <code>serialize_key</code> method. The first method call of interest is to <a href="https://github.com/serde-rs/json/blob/10132f800fd1223ac698fa8c41b201dca152c413/src/ser.rs#L1871">begin_object_key</a> on our formatter. Interestingly, this method uses the state enum we saw earlier to determine whether it should write a "," to our <code>Vec&lt;u8&gt;</code> (you don't need a comma before the first field).</p>
+<p>Next we call <code>key.serialize</code> and pass a <code>MapKeySerializer</code>, which <a href="https://github.com/serde-rs/json/blob/10132f800fd1223ac698fa8c41b201dca152c413/src/ser.rs#L869">implements Serializer</a>. In all cases <code>key</code> is a <code>&amp;'static str</code> (you can see this in the <code>impl SerializeStruct for Compound</code> block, but intuitively it is because the struct field names are known at compile time). <code>key.serialize</code> immediately calls back to our <code>MapKeySerializer</code> with <code>serializer.serialize_str</code> <a href="https://github.com/serde-rs/serde/blob/4eb580790dd6c96089b92942a5f481b21df4feaf/serde/src/ser/impls.rs#L43">as shown in the impl Serialize for str block</a> which <a href="https://github.com/serde-rs/json/blob/10132f800fd1223ac698fa8c41b201dca152c413/src/ser.rs#L879">dispatches</a> back to our <a href="https://github.com/serde-rs/json/blob/10132f800fd1223ac698fa8c41b201dca152c413/src/ser.rs#L223">root serializer's serialize_str method</a> which itself calls <a href="https://github.com/serde-rs/json/blob/10132f800fd1223ac698fa8c41b201dca152c413/src/ser.rs#L2065">format_escaped_str</a> to write the actual bytes, <code>"x"</code>, to our <code>Vec&lt;u8&gt;</code>.</p>
+<p>The <code>serialize_key</code> method ends with a call to our formatter's <a href="https://github.com/serde-rs/json/blob/10132f800fd1223ac698fa8c41b201dca152c413/src/ser.rs#L1886">end_object_key method</a>, which does nothing. If you are curious, it is the <a href="https://github.com/serde-rs/json/blob/10132f800fd1223ac698fa8c41b201dca152c413/src/ser.rs#L1897">begin_object_value method</a>, called at the start of <code>serialize_value</code> which writes the colon that is required between the key and the value in JSON maps.</p>
+<p>At this point things start getting a bit repetitive. The <code>serialize_value</code> method works nearly identically to the <code>serialize_key</code> method. Then both methods are repeated for the <code>y</code> field on our <code>Point</code>, then we ask the formatter to print the closing curly brace.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I realize that this post explains more of the 'how' than the 'why', and that may not be satisfying to some readers. While I can trace through the program mechanically, I am only starting to become comfortable with it on a conceptual level. Certainly I need to mull things over a bit more before I could claim to fully understand why things are the way they are.</p>
+<p>But what about my original guess for the implementation? One thing I have taken away from this is that Serde is very focused on performance. My original approach would have involved allocating an intermediate struct, which is likely a deal breaker when compared to the performance of the actual implementation.</p>
+<p>The thing I missed originally was that the Serde data model doesn't come in the form of a struct or enum, but rather in the form of functions which are implemented by each data format as the Serializer trait. The derive macro generates an implementation of the Serialize (not Serializer) trait, which drives the serializer by calling the appropriate methods on the serializer based on the type of Rust data structure being serialized. Beyond that, its all implementation details.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Coverage Reports as a Code Reading Tool</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Coverage Reports as a Code Reading Tool</h1>
+
+<p class="subtitle">2019-08-20</p>
+
+<p>Coverage reports are widely used to visualize the lines of code which are covered by test cases. Often this is used in CI to block merge requests which lower test coverage by some metric. But coverage reports don't have to be test coverage reports. In general, the idea of "run some code and see which lines are executed" can be applied to anything, not just the test cases.</p>
+<h2 id="how-can-coverage-reports-help-me-read-code">How can coverage reports help me read code?</h2>
+<p>I like to approach code reading with the goal of understanding a particular behavior of the program. Coverage reports can help illustrate which lines of code are responsible for a particular behavior. Example behaviors this could be applied to are listed below:</p>
+<ul>
+<li>Command line applications
+<ul>
+<li>passing an additional command line flag</li>
+<li>providing a particular type of input data</li>
+</ul>
+</li>
+<li>Graphical application
+<ul>
+<li>clicking a button with the mouse</li>
+<li>pressing a key on the keyboard</li>
+<li>changing the window size</li>
+</ul>
+</li>
+</ul>
+<h2 id="the-tools">The Tools</h2>
+<p>There are many tools for collecting code coverage data, but I'm going to use kcov. kcov works on any binary which is compiled with DWARF debug symbols, which suits my use case for performing these techniques against Rust binaries. Install instructions for kcov are <a href="https://github.com/SimonKagstrom/kcov/blob/master/INSTALL.md">here</a>.</p>
+<p>If kcov doesn't work in your situation, you can likely find an alternative. Just be sure to look for a code coverage tool which allows collecting coverage data while running the program itself, not just the test cases.</p>
+<p>kcov can generate nice coverage reports in a variety of formats, but it is not able to diff two coverage reports. I use pycobertura for this. Instructions for installing pycobertura can be found <a href="https://github.com/aconrad/pycobertura#install">here</a>.</p>
+<h2 id="lets-do-it">Lets do it</h2>
+<p>There are many ways to apply this technique, but for purposes of explanation I'll choose a single use case to walk through:</p>
+<blockquote>
+<p>I am trying to read and understand the <a href="https://github.com/jwilm/alacritty">Alacritty</a> codebase. Specifically, I want to understand the code which handles keyboard input.</p>
+</blockquote>
+<p>Alacritty is a GUI application written in Rust. As an introduction to the code, I'd like to know which lines of code are run to handle a single keypress.</p>
+<p>The first step of course is getting Alacritty building from source locally on my machine. Once that is done (<code>cargo build</code> completes successfully) you can start Alacritty with kcov collecting coverage data as follows:</p>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#5597d6;">kcov --include-path</span><span style="color:#72ab00;">=</span><span>alacritty_terminal/src \
+</span><span>	target/cov \
+</span><span>	target/debug/alacritty
+</span></code></pre>
+<p>This says run the binary <code>target/debug/alacritty</code> with kcov recording coverage data into a directory <code>target/cov</code>, and only report coverage data for source code in the <code>alacritty_terminal/src</code> directory (don't include dependencies). Alacritty should open a little slower than normal, but otherwise run like normal. Now press a key on the keyboard and then close Alacritty.</p>
+<p>Check the <code>target/cov</code> directory to see the coverage reports generated by kcov. I recommend starting by opening <code>index.html</code> in your browser. Looking at this report, you'll find that roughly 50% of the total Alacritty lines of code were executed in this minimal interaction. While cutting the amount of code you need to read in half might be helpful, its not the best we can do.</p>
+<p>The bulk of the lines executed during our test above were run during the course of the normal startup behavior of Alacritty, and if we could somehow filter out those lines then we could really narrow things down to just the code responsible for handling our keypress. To pull this off we'll make two coverage reports: in the first we'll start Alacritty, only allowing it to initialize before closing it. In the second we'll start Alacritty, then press a single key, then close it. These two runs can use the same kcov command written above, you'll just need to change the output directory. I chose <code>target/cov_min</code> and <code>target/cov_keypress</code>.</p>
+<p>Looking at the HTML coverage report (the report produced by kcov) for each of these runs, you can see that the second run executed only a couple hundred more lines than the first. The important question now is, specifically which lines are covered in the second run but not the first, as it is in here that we will find our answer about how Alacritty is handling our keypress. For this we'll use pycobertura.</p>
+<p>pycobertura has a diff mode, which compares two cobertura coverage reports and creates a new report. This report can be generated as follows:</p>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#5597d6;">pycobertura</span><span> diff \
+</span><span style="color:#5597d6;">	--format</span><span> html \
+</span><span style="color:#5597d6;">	--output</span><span> coverage.html \
+</span><span>	target/cov_min/alacritty.4d1e73ad/cobertura.xml \
+</span><span>	target/cov_keypress/alacritty.4d1e73ad/cobertura.xml
+</span></code></pre>
+<p>This command generates a <code>coverage.html</code> file in the directory you ran it. Open that file in your browser and you'll see in green the lines of source code which were executed in the second run but not the first. As expected, this is less than 200 lines of code.</p>
+<h4 id="a-word-of-caution">A word of caution</h4>
+<p>These 200 lines aren't necessarily the only code responsible for handling a keypress and rendering a character on the screen (in fact, they are almost certainly not). They represent the code which is unique to handling the keypress - that is, code which is executed when handling a keypress but which is not executed as part of the normal startup. For that reason, I recommend using this technique to find interesting starting points of exploration into the complete codebase.</p>
+<h4 id="a-faster-method">A faster method</h4>
+<p>Once you are comfortable with this technique, there is a slightly faster method you can use. kcov actually generates its reports in realtime, while your program is running. Given this, it is possible to capture both of our cobertura reports in a single kcov run, by copying the <code>cobertura.xml</code> file out of the kcov output directory after startup, and then again (with a different name) after pressing a key. I find this method actually works even better at minimizing the pycobertura diff.</p>
+<h2 id="inspiration">Inspiration</h2>
+<p>This technique is heavily inspired by the talk <a href="https://youtu.be/dSqLt8BgbRQ">Idealized Commit Logs: Code Simplification via Program Slicing</a> by Alan Shreve.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Code coverage tools aren't limited to reporting test coverage, you can also record coverage data while running the actual application. By diffing the results of two of these recordings, it is possible to determine which lines of code are uniquely responsible for a particular behavior within the application. This can serve as a great starting point when reading a new-to-you codebase.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

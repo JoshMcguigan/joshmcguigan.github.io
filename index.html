@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Josh Mcguigan - Blog</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<br>
+<ul class="posts">
+    
+    
+    <li class="post">
+        <date>2024-08-15</date>
+        <a href="https://www.joshmcguigan.com/blog/host-debian-repo/">
+            <span>Maintaining your own Debian package repository</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2024-06-19</date>
+        <a href="https://www.joshmcguigan.com/blog/gentoo-uutils-coreutils/">
+            <span>Swapping GNU coreutils for uutils coreutils on Gentoo Linux</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2024-05-05</date>
+        <a href="https://www.joshmcguigan.com/blog/literal-snapshot-testing/">
+            <span>Literal snapshot testing</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2023-07-05</date>
+        <a href="https://www.joshmcguigan.com/blog/ldd/">
+            <span>A surprising fact about ldd</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2023-02-04</date>
+        <a href="https://www.joshmcguigan.com/blog/internal-pull-up-resistor-i2c/">
+            <span>Internal pull-up resistors are insufficient for I2C</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2021-12-15</date>
+        <a href="https://www.joshmcguigan.com/blog/rustup-overhead/">
+            <span>Investigating slow incremental no-change Rust builds</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2021-02-28</date>
+        <a href="https://www.joshmcguigan.com/blog/troubleshooting-stuck-process/">
+            <span>Troubleshooting a stuck process</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2020-02-29</date>
+        <a href="https://www.joshmcguigan.com/blog/cost-of-indirection-rust/">
+            <span>The Cost of Indirection</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2020-01-11</date>
+        <a href="https://www.joshmcguigan.com/blog/blue-green-deployments-immutable-infrastructure/">
+            <span>Blue-Green Deployments and Immutable Infrastructure</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2019-12-28</date>
+        <a href="https://www.joshmcguigan.com/blog/low-cost-infrastructure-monitoring/">
+            <span>Low-cost Infrastructure Monitoring</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2019-12-21</date>
+        <a href="https://www.joshmcguigan.com/blog/run-your-own-dns-servers/">
+            <span>Run Your Own Authoritative DNS Servers</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2019-11-17</date>
+        <a href="https://www.joshmcguigan.com/blog/understanding-serde/">
+            <span>Understanding Serde</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2019-08-20</date>
+        <a href="https://www.joshmcguigan.com/blog/coverage-reports-code-reading-tool/">
+            <span>Coverage Reports as a Code Reading Tool</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2019-05-12</date>
+        <a href="https://www.joshmcguigan.com/blog/shell-completions-pure-rust/">
+            <span>Shell Completions in Pure Rust</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2019-02-23</date>
+        <a href="https://www.joshmcguigan.com/blog/multi-try-improved-validation-logic-rust/">
+            <span>Combine Results for Improved Rust Validation Logic</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2019-02-09</date>
+        <a href="https://www.joshmcguigan.com/blog/custom-exit-status-codes-rust/">
+            <span>Custom Exit Status Codes with ? in main</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2018-12-22</date>
+        <a href="https://www.joshmcguigan.com/blog/array-initialization-rust/">
+            <span>Methods for Array Initialization in Rust</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2018-11-17</date>
+        <a href="https://www.joshmcguigan.com/blog/build-your-own-shell-rust/">
+            <span>Build Your Own Shell using Rust</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2018-08-13</date>
+        <a href="https://www.joshmcguigan.com/blog/fizzbuzz-tour-of-traits-rust/">
+            <span>A FizzBuzzy Tour of Traits in Rust</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2018-07-31</date>
+        <a href="https://www.joshmcguigan.com/blog/betafpv-drone-flight-controller-board-support-crate/">
+            <span>BetaFPV F3 Drone Flight Controller - Board Support Crate</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2018-07-15</date>
+        <a href="https://www.joshmcguigan.com/blog/tsl256x-light-intensity-sensor-driver/">
+            <span>TSL256X Light Intensity Sensor Driver</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2018-07-11</date>
+        <a href="https://www.joshmcguigan.com/blog/betafpv-drone-flight-controller-hello-rust/">
+            <span>BetaFPV F3 Drone Flight Controller - Hello Rust</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2018-07-05</date>
+        <a href="https://www.joshmcguigan.com/blog/stm32f3discovery-quickstart/">
+            <span>STM32F3DISCOVERY Quick Start</span>
+        </a>
+    </li>
+    
+    <li class="post">
+        <date>2018-07-04</date>
+        <a href="https://www.joshmcguigan.com/blog/shift-register-driver/">
+            <span>Shift Register Driver</span>
+        </a>
+    </li>
+    
+</ul>
+
+        </div>
+    </section>
+</body>
+
+</html>

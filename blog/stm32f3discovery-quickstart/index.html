@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>STM32F3DISCOVERY Quick Start</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">STM32F3DISCOVERY Quick Start</h1>
+
+<p class="subtitle">2018-07-05</p>
+
+<p>The <a href="https://rust-embedded.github.io/discovery/">Discovery book</a> is a great getting started guide for new-comers to embedded programming in Rust. If you haven't read it yet, I highly recommend it. However, it stops short of providing step-by-step instructions for setting up a cargo project targeting the STM32F3DISCOVERY board from scratch. And even if there was such a guide it would be <a href="http://blog.japaric.io/quickstart/">many steps</a>, and I was hoping for something as simple as <code>cargo new</code>.</p>
+<p>It was for that reason I created <a href="https://github.com/JoshMcguigan/stm32f3discovery-quickstart">stm32f3discovery-quickstart</a>, a Bash script plus a few auxiliary files which make creating a new cargo project targeting the STM32F3DISCOVERY development board a one-liner.</p>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#5597d6;">$</span><span> git clone https://github.com/JoshMcguigan/stm32f3discovery-quickstart.git
+</span><span>    </span><span style="color:#5597d6;">Cloning</span><span> into </span><span style="color:#d07711;">&#39;stm32f3discovery-quickstart&#39;</span><span>...
+</span><span style="color:#5597d6;">$</span><span> ./stm32f3discovery-quickstart/init
+</span><span>    </span><span style="color:#5597d6;">Project</span><span> Name: newest-micro-project
+</span><span>        </span><span style="color:#5597d6;">Created</span><span> binary (application) `</span><span style="color:#5597d6;">newest-micro-project</span><span>` project
+</span><span style="color:#5597d6;">$</span><span> cd newest-micro-project/
+</span><span style="color:#5597d6;">$</span><span> cargo run
+</span><span>    </span><span style="color:#5597d6;">Updating</span><span> registry `</span><span style="color:#5597d6;">https://github.com/rust-lang/crates.io-index</span><span>`
+</span><span>    </span><span style="color:#5597d6;">Compiling</span><span> cc v1.0.17                                                         
+</span><span>    </span><span style="color:#5597d6;">...
+</span><span>    </span><span style="color:#5597d6;">Compiling</span><span> newest-micro-project v0.1.0 (file:///Users/josh/Projects/newest-micro-project)
+</span><span>     </span><span style="color:#5597d6;">Finished</span><span> dev </span><span style="color:#72ab00;">[</span><span>unoptimized + debuginfo</span><span style="color:#72ab00;">]</span><span> target(s) </span><span style="color:#5597d6;">in</span><span> 41.82s
+</span><span>      </span><span style="color:#5597d6;">Running </span><span>`</span><span style="color:#5597d6;">arm-none-eabi-gdb</span><span> target/thumbv7em-none-eabihf/debug/newest-micro-project`
+</span></code></pre>
+<p>Once you have cloned the <a href="https://github.com/JoshMcguigan/stm32f3discovery-quickstart">stm32f3discovery-quickstart</a> repository, creating a new STM32F3DISCOVERY project is as simple as <code>./stm32f3discovery-quickstart/init</code>. The script asks what name you'd like to give your project, and that's it. If you just wanted a simple way to generate a new STM32F3DISCOVERY project, you can stop reading here. If you're interested in how the script works, or you'd like to manually setup a cargo project to compile and run on the STM32F3DISCOVERY then read on.</p>
+<h2 id="how-it-works">How it works</h2>
+<p>The core of <a href="https://github.com/JoshMcguigan/stm32f3discovery-quickstart">stm32f3discovery-quickstart</a> is a Bash script named <code>init</code>. I'll explain each part of the script below.</p>
+<ol>
+<li>Asking the user for the project name, and creating the cargo binary</li>
+</ol>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#b39f04;">read </span><span style="color:#5597d6;">-p </span><span style="color:#d07711;">&#39;Project Name: &#39;</span><span> name
+</span><span style="color:#5597d6;">cargo</span><span> new $</span><span style="color:#5597d6;">name
+</span></code></pre>
+<ol>
+<li>Getting the directory that the <code>init</code> script is in (not the directory that the script is running from) - credit for this goes to <a href="https://stackoverflow.com/a/246128">this stackoverflow answer</a></li>
+</ol>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#5597d6;">DIR</span><span style="color:#72ab00;">=</span><span style="color:#d07711;">&quot;$( </span><span style="color:#b39f04;">cd </span><span style="color:#d07711;">&quot;$( </span><span style="color:#acb3c2;">dirname </span><span style="color:#d07711;">&quot;${</span><span style="color:#acb3c2;">BASH_SOURCE[</span><span style="color:#aeb52b;">0</span><span style="color:#acb3c2;">]</span><span style="color:#d07711;">}&quot; )&quot; </span><span style="color:#72ab00;">&amp;&amp; </span><span style="color:#b39f04;">pwd </span><span style="color:#d07711;">)&quot;
+</span></code></pre>
+<ol>
+<li>Copying the cargo and GDB configuration files from the stm32f3discovery-quickstart directory into the new project directory</li>
+</ol>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#5597d6;">cp -r </span><span>$</span><span style="color:#5597d6;">DIR</span><span>/.cargo ./$</span><span style="color:#5597d6;">name</span><span>/.cargo
+</span><span style="color:#5597d6;">cp </span><span>$</span><span style="color:#5597d6;">DIR</span><span>/.gdbinit ./$</span><span style="color:#5597d6;">name</span><span>/.gdbinit
+</span></code></pre>
+<ol>
+<li>Overwriting <code>main.rs</code> with the <a href="https://github.com/japaric/f3/blob/master/examples/roulette.rs">roulette example</a></li>
+</ol>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#5597d6;">cp </span><span>$</span><span style="color:#5597d6;">DIR</span><span>/src/main.rs ./$</span><span style="color:#5597d6;">name</span><span>/src/main.rs
+</span></code></pre>
+<ol>
+<li>Adding the necessary dependencies to <code>cargo.toml</code></li>
+</ol>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#5597d6;">cat </span><span>$</span><span style="color:#5597d6;">DIR</span><span>/dependencies </span><span style="color:#72ab00;">&gt;&gt;</span><span> ./$</span><span style="color:#5597d6;">name</span><span>/Cargo.toml
+</span></code></pre>
+<h2 id="requirements">Requirements</h2>
+<p>If you haven't read the Discovery book, I'd recommend working through chapters 3-5 before starting your own project using this tool. At a minimum, you'll need to follow the steps in chapter 3 to <a href="https://rust-embedded.github.io/discovery/03-setup/index.html">set up your development environment</a>.</p>
+<p>If you have worked through the book, you already have everything you need.</p>
+<h2 id="future-improvements">Future Improvements</h2>
+<p>I think it'd be great to see a <a href="https://github.com/rust-lang/cargo/wiki/Third-party-cargo-subcommands">cargo subcommand</a> which encapsulates not only this behavior, but expands it to support many other ARM development boards. If you have any interest in either using or contributing to something like this, <a href="https://github.com/JoshMcguigan/stm32f3discovery-quickstart/issues/1">join the discussion here</a>.</p>
+<h2 id="acknowledgement">Acknowledgement</h2>
+<p>This leans heavily on a number of previous works by <a href="http://japaric.io">Jorge Aparicio</a>. Without his dedication to the embedded Rust community, I would not have even known where to start.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

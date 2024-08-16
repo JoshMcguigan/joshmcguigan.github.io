@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Troubleshooting a stuck process</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Troubleshooting a stuck process</h1>
+
+<p class="subtitle">2021-02-28</p>
+
+<p>I was recently troubleshooting an issue where a process seemed to be stuck, not making any progress. Eventually I was able to track down the problem, but along the way I found a few quick ways to start gathering information about a running process.</p>
+<p>These tips apply only to Linux systems. I'm sure other operating systems have similar tools, but I am not familiar with them so I won't mention them here.</p>
+<p>I use <code>sleep</code> as an example program to "troubleshoot" throughout this article. You will probably want to replace <code>sleep</code> in my examples below with something more interesting.</p>
+<h2 id="strace">strace</h2>
+<p>strace prints out the system calls made by a particular process. One option when using strace is to start the program from within strace:</p>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#7f8989;"># trace the command `sleep 10`
+</span><span style="color:#5597d6;">$</span><span> strace sleep 10
+</span><span>
+</span><span style="color:#5597d6;">execve</span><span>(</span><span style="color:#d07711;">&quot;/usr/bin/sleep&quot;</span><span>, </span><span style="color:#72ab00;">[</span><span style="color:#d07711;">&quot;sleep&quot;</span><span>, </span><span style="color:#d07711;">&quot;10&quot;</span><span style="color:#72ab00;">]</span><span>, 0x7ffc0b292728 /</span><span style="color:#72ab00;">*</span><span> 54 vars </span><span style="color:#72ab00;">*</span><span>/) </span><span style="color:#72ab00;">= </span><span style="color:#5597d6;">0
+</span><span style="color:#5597d6;">...
+</span><span style="color:#5597d6;">clock_nanosleep</span><span>(CLOCK_REALTIME, 0, {tv_sec=10, tv_nsec=0}, 0x7ffd8fa9ef30) </span><span style="color:#72ab00;">= </span><span style="color:#5597d6;">0
+</span><span style="color:#5597d6;">...
+</span></code></pre>
+<p>strace has lots of output so I removed most of it, but watching the output live you can see which system call your process is getting stalled on. In this case it is <code>clock_nanosleep</code>.</p>
+<p>Sometimes you realize you want to see what a process is doing after the process has already started - in that case you can use strace to attach to an existing process by PID:</p>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#7f8989;"># start `sleep 10` in the background
+</span><span style="color:#5597d6;">$</span><span> sleep 10 </span><span style="color:#72ab00;">&amp;
+</span><span>
+</span><span style="color:#5597d6;">$</span><span> pgrep sleep </span><span style="color:#72ab00;">| </span><span style="color:#5597d6;">xargs -n1</span><span> sudo strace</span><span style="color:#5597d6;"> -p 
+</span></code></pre>
+<p>Here we use <code>pgrep</code> to get the process ID of the <code>sleep</code> process, then use strace to attach to that process. Be aware that <code>pgrep</code> uses a regular expression to match the process name, so you might want to use <code>pgrep ^sleep$</code> or <code>pidof sleep</code> for stricter matching.</p>
+<p>The downside to attaching strace to a running application is that if the process has already called into a blocking system call, as is likely the case here with sleep, you won't see anything with strace until that system call returns and a next system call is invoked.</p>
+<h2 id="procfs-kernel-stack">procfs kernel stack</h2>
+<p>If you use strace to attach to a running process and find it stalled on a blocking syscall (so strace is not providing any output), you can use procfs to determine the currently running syscall, as well as the full kernel stack trace.</p>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#7f8989;"># start `sleep 10` in the background
+</span><span style="color:#5597d6;">$</span><span> sleep 10 </span><span style="color:#72ab00;">&amp;
+</span><span>
+</span><span style="color:#5597d6;">$</span><span> pgrep sleep </span><span style="color:#72ab00;">| </span><span style="color:#5597d6;">xargs -I </span><span>% sudo cat /proc/%/stack
+</span><span style="color:#5597d6;">[</span><span style="color:#72ab00;">&lt;</span><span style="color:#b3933a;">0</span><span style="color:#72ab00;">&gt;</span><span>] hrtimer_nanosleep+0xca/0x1a0
+</span><span style="color:#5597d6;">[</span><span style="color:#72ab00;">&lt;</span><span style="color:#b3933a;">0</span><span style="color:#72ab00;">&gt;</span><span>] common_nsleep+0x40/0x50
+</span><span style="color:#5597d6;">[</span><span style="color:#72ab00;">&lt;</span><span style="color:#b3933a;">0</span><span style="color:#72ab00;">&gt;</span><span>] __x64_sys_clock_nanosleep+0xd1/0x140
+</span><span style="color:#5597d6;">[</span><span style="color:#72ab00;">&lt;</span><span style="color:#b3933a;">0</span><span style="color:#72ab00;">&gt;</span><span>] do_syscall_64+0x33/0x40
+</span><span style="color:#5597d6;">[</span><span style="color:#72ab00;">&lt;</span><span style="color:#b3933a;">0</span><span style="color:#72ab00;">&gt;</span><span>] entry_SYSCALL_64_after_hwframe+0x44/0xa9
+</span></code></pre>
+<p>Here again we can see we are stuck in the <code>clock_nanosleep</code> system call, but this time we are able to figure it out while the process is blocked on the system call, whereas with strace we would have had to start tracing <em>before</em> the process calls the blocking system call.</p>
+<h2 id="userspace-trace">userspace trace</h2>
+<p>Now you might want to know where in the application code the syscall was called from. Or an alternate case would be that you find the application isn't stuck in kernel space but rather is stuck executing application code.</p>
+<p>You can use <code>gdb</code> to see the current userspace stack trace.</p>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#7f8989;"># start `sleep 10` in the background
+</span><span style="color:#5597d6;">$</span><span> sleep 10 </span><span style="color:#72ab00;">&amp;
+</span><span>
+</span><span style="color:#5597d6;">$</span><span> pgrep sleep </span><span style="color:#72ab00;">| </span><span style="color:#5597d6;">xargs -n1</span><span> sudo gdb</span><span style="color:#5597d6;"> --batch -ex </span><span style="color:#d07711;">&quot;thread apply all bt&quot;</span><span style="color:#5597d6;"> -p
+</span><span style="color:#5597d6;">0x00007f8b1b29f0da</span><span> in clock_nanosleep@GLIBC_2.2.5 () </span><span style="color:#5597d6;">from</span><span> /usr/lib/libc.so.6
+</span><span>
+</span><span style="color:#5597d6;">Thread</span><span> 1 (process 132170 </span><span style="color:#d07711;">&quot;sleep&quot;</span><span>)</span><span style="color:#b39f04;">:
+</span><span style="color:#7f8989;">#0  0x00007f8b1b29f0da in clock_nanosleep@GLIBC_2.2.5 () from /usr/lib/libc.so.6
+</span><span style="color:#7f8989;">#1  0x00007f8b1b2a4357 in nanosleep () from /usr/lib/libc.so.6
+</span><span style="color:#7f8989;">#2  0x000055fae2c404c8 in ?? ()
+</span><span style="color:#7f8989;">#3  0x000055fae2c40282 in ?? ()
+</span><span style="color:#7f8989;">#4  0x000055fae2c3d251 in ?? ()
+</span><span style="color:#7f8989;">#5  0x00007f8b1b1ffb25 in __libc_start_main () from /usr/lib/libc.so.6
+</span><span style="color:#7f8989;">#6  0x000055fae2c3d32e in ?? ()
+</span><span style="color:#5597d6;">[Inferior</span><span> 1 (process 132170) </span><span style="color:#5597d6;">detached]
+</span></code></pre>
+<p>The usefulness of this information depends on the existence of debug symbols, so you may not get much out of it unless you can re-compile the application with debug symbols included.</p>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#5597d6;">$</span><span> pgrep rust-analyzer </span><span style="color:#72ab00;">| </span><span style="color:#5597d6;">xargs -n1</span><span> sudo gdb</span><span style="color:#5597d6;"> --batch -ex </span><span style="color:#d07711;">&quot;thread apply all bt&quot;</span><span style="color:#5597d6;"> -p
+</span><span>
+</span><span style="color:#7f8989;"># ... omitting lots of output from other threads
+</span><span>
+</span><span style="color:#5597d6;">Thread</span><span> 1 (LWP 113543 </span><span style="color:#d07711;">&quot;rust-analyzer&quot;</span><span>)</span><span style="color:#b39f04;">:
+</span><span style="color:#7f8989;">#0  0x00007fc9b871ba9d in syscall () from /usr/lib/libc.so.6
+</span><span style="color:#7f8989;">#1  0x0000561397f843aa in std::sys::unix::futex::futex_wait () at /rustc/cb75ad5db02783e8b0222fee363c5f63f7e2cf5b//library/std/src/sys/unix/futex.rs:25
+</span><span style="color:#7f8989;">#2  std::sys_common::thread_parker::futex::Parker::park () at /rustc/cb75ad5db02783e8b0222fee363c5f63f7e2cf5b//library/std/src/sys_common/thread_parker/futex.rs:50
+</span><span style="color:#7f8989;">#3  std::thread::park () at /rustc/cb75ad5db02783e8b0222fee363c5f63f7e2cf5b//library/std/src/thread/mod.rs:885
+</span><span style="color:#7f8989;">#4  0x0000561397f6a673 in crossbeam_channel::context::Context::wait_until ()
+</span><span style="color:#7f8989;">#5  0x0000561397f6a36e in crossbeam_channel::context::Context::with::{{closure}} ()
+</span><span style="color:#7f8989;">#6  0x0000561397f6aa07 in crossbeam_channel::select::run_select ()
+</span><span style="color:#7f8989;">#7  0x00005613972e3c6f in rust_analyzer::main_loop::&lt;impl rust_analyzer::global_state::GlobalState&gt;::run ()
+</span><span style="color:#7f8989;">#8  0x0000561397371fe2 in rust_analyzer::main_loop::main_loop ()
+</span><span style="color:#7f8989;">#9  0x00005613971ed850 in rust_analyzer::main ()
+</span><span style="color:#7f8989;">#10 0x0000561397207e63 in std::sys_common::backtrace::__rust_begin_short_backtrace ()
+</span><span style="color:#7f8989;">#11 0x00005613972083a9 in std::rt::lang_start::_$u7b$$u7b$closure$u7d$$u7d$::h01cd5294bcfc3945 ()
+</span><span style="color:#7f8989;">#12 0x0000561397f96347 in core::ops::function::impls::{{impl}}::call_once&lt;(),Fn&lt;()&gt;&gt; () at /rustc/cb75ad5db02783e8b0222fee363c5f63f7e2cf5b/library/core/src/ops/function.rs:259
+</span><span style="color:#7f8989;">#13 std::panicking::try::do_call&lt;&amp;Fn&lt;()&gt;,i32&gt; () at /rustc/cb75ad5db02783e8b0222fee363c5f63f7e2cf5b//library/std/src/panicking.rs:379
+</span><span style="color:#7f8989;">#14 std::panicking::try&lt;i32,&amp;Fn&lt;()&gt;&gt; () at /rustc/cb75ad5db02783e8b0222fee363c5f63f7e2cf5b//library/std/src/panicking.rs:343
+</span><span style="color:#7f8989;">#15 std::panic::catch_unwind&lt;&amp;Fn&lt;()&gt;,i32&gt; () at /rustc/cb75ad5db02783e8b0222fee363c5f63f7e2cf5b//library/std/src/panic.rs:396
+</span><span style="color:#7f8989;">#16 std::rt::lang_start_internal () at /rustc/cb75ad5db02783e8b0222fee363c5f63f7e2cf5b//library/std/src/rt.rs:51
+</span><span style="color:#7f8989;">#17 0x00005613971ee8f2 in main ()
+</span></code></pre>
+<p>This demonstrates what the output might look like for an appication compiled with debug symbols.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>These tools probably aren't enough to immediately root cause an issue, but they are a great way to gather some initial information which can help guide further troubleshooting effort.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

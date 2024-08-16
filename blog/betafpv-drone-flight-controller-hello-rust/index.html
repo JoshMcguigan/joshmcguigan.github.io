@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BetaFPV F3 Drone Flight Controller - Hello Rust</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">BetaFPV F3 Drone Flight Controller - Hello Rust</h1>
+
+<p class="subtitle">2018-07-11</p>
+
+<p>One of the most exciting areas of hobbyist embedded programming, in my opinion, is flight controllers for remote controlled aircraft. In the particular case of a multi-rotor drone, the flight controller is responsible for converting the <code>UP</code> command from the transmitter into specific outputs for each of the motors. Maintaining the stability of a drone involves carefully adjusting the output of each motor thousands of times per second based on feedback from on-board sensors.</p>
+<p>There are several great C-based open source drone flight controller firmware projects, but as far as I can see there are none written in Rust. The good news is that most drone flight controllers are based on STM32 MCUs, which Rust has strong support for. Robust flight controller firmware is quite complex, and there are a number of challenges to be solved before even getting the rotors spinning. The first of those challenges is building a Rust project for a particular flight controller board, and flashing the board with the compiled code. A single blinking LED is our goal for today.</p>
+<h2 id="why-the-betafpv-f3">Why the BetaFPV F3?</h2>
+<p>There are many options when it comes to drone flight controller hardware, so why pick the BetaFPV F3? My main concern was choosing a board with a supported and relatively popular (in the embedded Rust community) MCU. Most flight controllers are based on some STM32 variant, and this controller is no exception. It is based on the STM32F303, which is supported by an existing <a href="https://github.com/japaric/stm32f30x-hal">hal implementation crate</a>. Beyond compatibility with Rust, my other goal was to find a platform that would allow for an easily re-creatable drone build. Unlike many manufacturers, BetaFPV sells a <a href="https://betafpv.com/products/beta75-bnf-tiny-whoop-quadcopter">complete drone kit</a> based on this controller. This allows for another developer to quickly and easily recreate, test, and contribute to this work.</p>
+<h2 id="project-structure">Project Structure</h2>
+<p>The structure I setup to build a Cargo project for the flight controller is based heavily on the <a href="http://blog.japaric.io/quickstart/">STM32 Quickstart Guide</a> by Jorge Aparicio, but there are some minor changes. Below I'll outline all of the required steps, starting right after <code>cargo new</code>.</p>
+<ol>
+<li>In the root of your project, create a new directory and file <code>.cargo/config</code></li>
+</ol>
+<pre data-lang="toml" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-toml "><code class="language-toml" data-lang="toml"><span>[</span><span style="color:#6486ab;">target.thumbv7em-none-eabihf</span><span>]
+</span><span style="color:#7f902a;">runner </span><span>= </span><span style="color:#d07711;">&quot;arm-none-eabi-gdb&quot;
+</span><span style="color:#7f902a;">rustflags </span><span>= [
+</span><span>    </span><span style="color:#d07711;">&quot;-C&quot;</span><span>, </span><span style="color:#d07711;">&quot;link-arg=-Tlink.x&quot;</span><span>,
+</span><span>    </span><span style="color:#d07711;">&quot;-C&quot;</span><span>, </span><span style="color:#d07711;">&quot;link-arg=-nostartfiles&quot;
+</span><span>]
+</span><span>[</span><span style="color:#6486ab;">build</span><span>]
+</span><span style="color:#7f902a;">target </span><span>= </span><span style="color:#d07711;">&quot;thumbv7em-none-eabihf&quot;
+</span></code></pre>
+<ol>
+<li>Also in the root of your project, create a new file <code>memory.x</code></li>
+</ol>
+<pre style="background-color:#f5f5f5;color:#1f1f1f;"><code><span>    MEMORY
+</span><span>    {
+</span><span>        /* NOTE K = KiBi = 1024 bytes */
+</span><span>        FLASH : ORIGIN = 0x08000000, LENGTH = 256K
+</span><span>        RAM : ORIGIN = 0x20000000, LENGTH = 40K
+</span><span>    }
+</span><span>    _stack_start = ORIGIN(RAM) + LENGTH(RAM);
+</span></code></pre>
+<ol>
+<li>Add these dependencies to <code>Cargo.toml</code></li>
+</ol>
+<pre data-lang="toml" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-toml "><code class="language-toml" data-lang="toml"><span>    [</span><span style="color:#6486ab;">dependencies</span><span>]
+</span><span>    </span><span style="color:#7f902a;">cortex-m </span><span>= </span><span style="color:#d07711;">&quot;*&quot;
+</span><span>    </span><span style="color:#7f902a;">cortex-m-rt </span><span>= </span><span style="color:#d07711;">&quot;*&quot;
+</span><span>    </span><span style="color:#7f902a;">panic-semihosting </span><span>= </span><span style="color:#d07711;">&quot;*&quot;
+</span><span>    
+</span><span>    [</span><span style="color:#6486ab;">dependencies.stm32f30x-hal</span><span>]
+</span><span>    </span><span style="color:#7f902a;">features </span><span>= [</span><span style="color:#d07711;">&quot;rt&quot;</span><span>]
+</span><span>    </span><span style="color:#7f902a;">version </span><span>= </span><span style="color:#d07711;">&quot;*&quot;
+</span></code></pre>
+<ol>
+<li>Update <code>src/main.rs</code></li>
+</ol>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#![</span><span style="color:#5597d6;">no_std</span><span>]
+</span><span>#![</span><span style="color:#5597d6;">no_main</span><span>]
+</span><span>
+</span><span>#[</span><span style="color:#5597d6;">macro_use</span><span>(entry, exception)]
+</span><span style="color:#72ab00;">extern crate</span><span> cortex_m_rt </span><span style="color:#72ab00;">as</span><span> rt;
+</span><span style="color:#72ab00;">extern crate</span><span> cortex_m;
+</span><span style="color:#72ab00;">extern crate</span><span> panic_semihosting;
+</span><span style="color:#72ab00;">extern crate</span><span> stm32f30x_hal;
+</span><span>
+</span><span style="color:#72ab00;">use </span><span>rt::ExceptionFrame;
+</span><span style="color:#72ab00;">use </span><span>core::ptr;
+</span><span style="color:#72ab00;">use </span><span>cortex_m::asm::nop;
+</span><span>
+</span><span style="color:#a2a001;">entry!</span><span>(main);
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() -&gt; </span><span style="color:#72ab00;">! </span><span>{
+</span><span>    </span><span style="color:#668f14;">const </span><span style="color:#b3933a;">RCC_AHBENR</span><span>: </span><span style="color:#668f14;">u32 </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0x40021014</span><span>;
+</span><span>    </span><span style="color:#7f8989;">// page 51
+</span><span>    </span><span style="color:#668f14;">const </span><span style="color:#b3933a;">GPIOC_MODER</span><span>: </span><span style="color:#668f14;">u32 </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0x48000800</span><span>;
+</span><span>    </span><span style="color:#7f8989;">// page 51 for start of GPIOC plus offset 18 on page 240
+</span><span>    </span><span style="color:#668f14;">const </span><span style="color:#b3933a;">GPIOC_BSRR</span><span>: </span><span style="color:#668f14;">u32 </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0x48000818</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#668f14;">unsafe </span><span>{
+</span><span>        </span><span style="color:#7f8989;">// page 148
+</span><span>        </span><span style="color:#72ab00;">*</span><span>(</span><span style="color:#b3933a;">RCC_AHBENR </span><span style="color:#72ab00;">as </span><span style="color:#668f14;">*mut u32</span><span>) </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">1 </span><span style="color:#72ab00;">&lt;&lt; </span><span style="color:#b3933a;">19</span><span>;
+</span><span>
+</span><span>        </span><span style="color:#7f8989;">// page 237
+</span><span>        </span><span style="color:#72ab00;">*</span><span>(</span><span style="color:#b3933a;">GPIOC_MODER </span><span style="color:#72ab00;">as </span><span style="color:#668f14;">*mut u32</span><span>) </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">1 </span><span style="color:#72ab00;">&lt;&lt; </span><span style="color:#b3933a;">30</span><span>;
+</span><span>
+</span><span>        </span><span style="color:#72ab00;">loop </span><span>{
+</span><span>            </span><span style="color:#7f8989;">// page 240
+</span><span>            ptr::write_volatile(</span><span style="color:#b3933a;">GPIOC_BSRR </span><span style="color:#72ab00;">as </span><span style="color:#668f14;">*mut u32</span><span>, </span><span style="color:#b3933a;">1 </span><span style="color:#72ab00;">&lt;&lt; </span><span>(</span><span style="color:#b3933a;">15</span><span style="color:#72ab00;">+</span><span style="color:#b3933a;">16</span><span>));
+</span><span>
+</span><span>            </span><span style="color:#72ab00;">for</span><span> _i </span><span style="color:#72ab00;">in </span><span style="color:#b3933a;">0</span><span style="color:#72ab00;">..</span><span style="color:#b3933a;">100_000 </span><span>{
+</span><span>                </span><span style="color:#b39f04;">nop</span><span>();
+</span><span>            }
+</span><span>
+</span><span>            ptr::write_volatile(</span><span style="color:#b3933a;">GPIOC_BSRR </span><span style="color:#72ab00;">as </span><span style="color:#668f14;">*mut u32</span><span>, </span><span style="color:#b3933a;">1 </span><span style="color:#72ab00;">&lt;&lt; </span><span>(</span><span style="color:#b3933a;">15</span><span>));
+</span><span>
+</span><span>            </span><span style="color:#72ab00;">for</span><span> _i </span><span style="color:#72ab00;">in </span><span style="color:#b3933a;">0</span><span style="color:#72ab00;">..</span><span style="color:#b3933a;">100_000 </span><span>{
+</span><span>                </span><span style="color:#b39f04;">nop</span><span>();
+</span><span>            }
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#a2a001;">exception!</span><span>(HardFault, hard_fault);
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">hard_fault</span><span>(</span><span style="color:#5597d6;">ef</span><span>: </span><span style="color:#72ab00;">&amp;</span><span>ExceptionFrame) -&gt; </span><span style="color:#72ab00;">! </span><span>{
+</span><span>    </span><span style="color:#a2a001;">panic!</span><span>(</span><span style="color:#d07711;">&quot;{:#?}&quot;</span><span>, ef);
+</span><span>}
+</span><span>
+</span><span style="color:#a2a001;">exception!</span><span>(</span><span style="color:#72ab00;">*</span><span>, default_handler);
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">default_handler</span><span>(</span><span style="color:#5597d6;">irqn</span><span>: </span><span style="color:#668f14;">i16</span><span>) {
+</span><span>    </span><span style="color:#a2a001;">panic!</span><span>(</span><span style="color:#d07711;">&quot;Unhandled exception (IRQn = {})&quot;</span><span>, irqn);
+</span><span>}
+</span></code></pre>
+<h2 id="what-does-it-do">What does it do?</h2>
+<p>The code above directly modifies register values on the STM32F3 in order to flash the LED which is built into the flight controller. Given this board is already supported by the <code>stm32f30x</code> and <code>stm32f30x-hal</code> crates, this code is lower level than necessary, but it's good practice understanding the ST documentation. If you'd like to follow along, the page numbers in the code comments are from <a href="https://www.st.com/content/ccc/resource/technical/document/reference_manual/4a/19/6e/18/9d/92/43/32/DM00043574.pdf/files/DM00043574.pdf/jcr:content/translations/en.DM00043574.pdf">this manual</a>.</p>
+<p>The other knowledge necessary to write this code is which pin the LED is connected to. I have not been able to track down a full schematic for this board, but I've been getting by so far with the following resources:</p>
+<p><a href="https://github.com/betaflight/betaflight/tree/master/src/main/target/BETAFLIGHTF3">Implementation code for this flight controller from the beta flight project</a></p>
+<p><a href="https://betafpv.freshdesk.com/support/solutions/articles/27000044289-cli-dump-of-fcs">Helpdesk article from the manufacturer</a></p>
+<p>Both of these links say there is a beeper on pin C15, and that the beeper signal is inverted. It turns out that there is no beeper on this board, but there is an LED attached to that pin. The signal to the LED is inverted, so turning the pin off turns the LED on.</p>
+<h2 id="building-flashing">Building &amp; Flashing</h2>
+<p>The flight controller has a micro-usb port which can be used for communications or programming via the DFU bootloader. To flash the chip you'll need <a href="http://dfu-util.sourceforge.net/">dfu-util</a>, or some other DFU tool. Press and hold the boot button on the flight controller while inserting the USB cable and the board will startup in bootloader mode. This is indicated by a solid blue LED on the bottom of the board (the red LED on the bottom of the board should be off). From there, it takes only a few commands to build the Rust binary and load the program.</p>
+<pre data-lang="bash" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-bash "><code class="language-bash" data-lang="bash"><span style="color:#5597d6;">cargo</span><span> build</span><span style="color:#5597d6;"> --release
+</span><span style="color:#5597d6;">arm-none-eabi-objcopy -O</span><span> binary ./target/thumbv7em-none-eabihf/release/drone drone.bin
+</span><span style="color:#5597d6;">dfu-util -D</span><span> drone.bin</span><span style="color:#5597d6;"> --alt</span><span> 0</span><span style="color:#5597d6;"> -R -s</span><span> 0x08000000
+</span></code></pre>
+<p>After the loading is complete, restart the controller by unplugging and re-plugging it into the USB port and you should see the red LED on the bottom of the board blinking.</p>
+<p>Note, the top of the board has a red LED which always blinks (even in bootloader mode). The bottom of the board has one red LED and one blue LED. I'm not sure at this point how to control the blue LED, or if it is even possible.</p>
+<h2 id="future-work">Future Work</h2>
+<p>The next steps for development on this hardware are to continue to reverse engineer the board layout, as well as to develop drivers for the on-board devices. The initial goal would be creation of a <a href="https://github.com/rust-embedded/awesome-embedded-rust#board-support-crates">board support crate</a>, as well as a driver for the gyroscope / accelerometer.</p>
+<p>If you'd like to work alongside me, the exact board I purchased is available via <a href="https://www.amazon.com/BETAFPV-Brushed-Controller-Integrated-Receiver/dp/B074GXKKZ7">Amazon</a>.</p>
+<h5 id="update-july-31-2018">Update - July 31, 2018</h5>
+<p>The <a href="https://github.com/JoshMcguigan/betafpv-f3">board support crate for the BetaFPV F3</a> is now available on GitHub. It is a work in progress but it currently provides high level abstractions for the LED, motors, and motion processing unit. I also wrote a blog post <a href="/blog/betafpv-drone-flight-controller-board-support-crate/">introducing the BetaFPV F3 board support crate</a>.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

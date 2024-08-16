@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Shift Register Driver</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Shift Register Driver</h1>
+
+<p class="subtitle">2018-07-04</p>
+
+<p>I recently finished reading the <a href="https://rust-embedded.github.io/discovery/">Discovery book</a> as an introduction to embedded programming in Rust. The book assumes minimal previous experience so it is a great way to learn embedded programming, as well as expand your Rust skills (I'd recommend at least having completed the <a href="https://doc.rust-lang.org/book/second-edition/index.html">Rust book</a> before starting).</p>
+<p>This <a href="http://blog.japaric.io/brave-new-io">blog post</a> roughly outlines the current state of the embedded Rust eco-system, and in it Jorge (author of the Discovery book) challenges the community with the <a href="https://github.com/rust-lang-nursery/embedded-wg/issues/39">weekly driver initiative</a>. Creating a driver sounds difficult, but it turns out that for many device types, it is well within reach after completing the Discovery book. The <a href="https://github.com/JoshMcguigan/shift-register-driver">shift register driver</a> is my first contribution to the initiative.</p>
+<h2 id="what-s-a-shift-register">What's a shift register?</h2>
+<p>Shift registers are used as GPIO expanders. Serial-in parallel-out shift registers, which are the type initially supported by this driver, consume three output pins from your controller and in return provide eight (or more, theoretically unlimited) outputs. They do this by converting a series of pulses on the three output pins into a particular state of the shift register output pins.</p>
+<h2 id="hardware-abstraction-layer">Hardware abstraction layer</h2>
+<p>The shift register driver is built on top of traits defined in the <a href="https://github.com/japaric/embedded-hal">embedded-hal</a> crate. This crate defines a set of high-level interfaces to common embedded systems peripherals. For example, it defines a trait <code>OutputPin</code> which has only two methods: <code>set_high()</code> and <code>set_low()</code>. Creating a driver on top of the embedded-hal traits means that any device which has a <a href="https://github.com/rust-embedded/awesome-embedded-rust#hal-implementation-crates">hal implementation crate</a> can use your driver.</p>
+<h2 id="using-the-driver">Using the driver</h2>
+<p>The serial-in parallel-out shift register struct is in a module called <code>sipo</code> with the expectation that there will eventually be support within this driver for parallel-in serial-out shift registers (which would go in a <code>piso</code> module). Constructing a new <code>ShiftRegister</code> consumes three output pins (any struct which impl's the embedded-hal trait <code>OutputPin</code>).</p>
+<p>From there, you can call <code>shift_register.decompose()</code> which returns an array of eight <code>ShiftRegisterPin</code> structs, each of which associated with an output on the shift register. The <code>ShiftRegisterPin</code> struct impl's the embedded-hal trait <code>OutputPin</code> as well, so you can control these pins with <code>pin.set_high()</code>, <code>pin.set_low()</code>, or pass these pins along to any other driver which expects an embedded-hal <code>OutputPin</code>.</p>
+<p>Finally, if you are done with the shift register outputs and you'd like to regain ownership of the original three GPIO pins used to construct the shift register, you can call <code>shift_register.release()</code>.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>shift_register_driver::sipo::ShiftRegister; 
+</span><span style="color:#668f14;">let</span><span> shift_register </span><span style="color:#72ab00;">= </span><span>ShiftRegister::new(clock, latch, data); 
+</span><span>{ 
+</span><span>	</span><span style="color:#668f14;">let mut</span><span> outputs </span><span style="color:#72ab00;">=</span><span> shift_register.</span><span style="color:#b39f04;">decompose</span><span>();  
+</span><span>	</span><span style="color:#72ab00;">for</span><span> i </span><span style="color:#72ab00;">in </span><span style="color:#b3933a;">0</span><span style="color:#72ab00;">..</span><span style="color:#b3933a;">8 </span><span>{
+</span><span>		outputs[i].</span><span style="color:#b39f04;">set_high</span><span>(); 
+</span><span>		delay.</span><span style="color:#b39f04;">delay_ms</span><span>(</span><span style="color:#b3933a;">300</span><span style="color:#668f14;">u32</span><span>); 
+</span><span>	}  
+</span><span>	</span><span style="color:#72ab00;">for</span><span> i </span><span style="color:#72ab00;">in </span><span style="color:#b3933a;">0</span><span style="color:#72ab00;">..</span><span style="color:#b3933a;">8 </span><span>{ 
+</span><span>		outputs[</span><span style="color:#b3933a;">7</span><span style="color:#72ab00;">-</span><span>i].</span><span style="color:#b39f04;">set_low</span><span>(); 
+</span><span>		delay.</span><span style="color:#b39f04;">delay_ms</span><span>(</span><span style="color:#b3933a;">300</span><span style="color:#668f14;">u32</span><span>); 
+</span><span>	}  
+</span><span>} 
+</span><span style="color:#7f8989;">// shift_register.release() can optionally be used when the shift register is no 
+</span><span style="color:#7f8989;">//      longer needed in order to regain ownership of the original GPIO pins 
+</span><span style="color:#668f14;">let </span><span>(clock, latch, data) </span><span style="color:#72ab00;">=</span><span> shift_register.</span><span style="color:#b39f04;">release</span><span>();
+</span></code></pre>
+<h2 id="getting-involved">Getting involved</h2>
+<p>Writing a driver was a great learning experience. If you are interested in embedded Rust, I'd highly recommend that you purchase a <code>STM32F3DISCOVERY</code> discovery board and work through the Discovery book. After that, review the code of some of the existing <a href="https://github.com/rust-embedded/awesome-embedded-rust#driver-crates">driver crates</a>, then find a device which doesn't already have a driver and get started!</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Run Your Own Authoritative DNS Servers</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Run Your Own Authoritative DNS Servers</h1>
+
+<p class="subtitle">2019-12-21</p>
+
+<p>The domain name system is a critical part of the internet, but it is often overlooked. In this post I'll explain my rationale for running my own DNS authoritative name servers, and then share the automated deploy and configuration scripts I created along the way, which would enable you to setup DNS servers of your own in under an hour.</p>
+<h2 id="what-is-an-authoritative-name-server">What is an authoritative name server?</h2>
+<p>Broadly speaking, there are two types of DNS servers. Recursive resolvers are the type users are more likely to be familiar with. Examples of recursive resolvers are <a href="https://www.cloudflare.com/learning/dns/what-is-1.1.1.1/">Cloudflare's 1.1.1.1</a> and <a href="https://developers.google.com/speed/public-dns">Google's 8.8.8.8</a>. When your computer needs to perform a DNS lookup, it will ask a recursive resolver.</p>
+<p>Authoritative name servers are the source of truth in the domain name system. When recursive resolvers get a request for a particular domain name, they will get that information from the authoritative name servers (assuming they don't already have it stored in their cache).</p>
+<p>When you buy a domain name, in the most technical sense the thing you are buying is the right to act as the authoritative name server for that DNS zone.</p>
+<p>If you are interesting in learning more about DNS, <a href="https://howdns.works/ep1/">this webcomic</a> serves as a great introduction.</p>
+<h2 id="why-run-your-own-dns-servers">Why run your own DNS servers?</h2>
+<p>It is possible to own a domain and run a website without giving much of a thought at all to DNS. This is because nearly every domain registrar offers free DNS hosting as a benefit to their customers. So given this, why would I want to run my own name servers?</p>
+<p>My answer here is entirely non-technical. I am doing it to learn. And not just about DNS, but also about running a highly available, globally distributed service.</p>
+<h2 id="why-not-run-your-own-dns-servers">Why NOT run your own DNS servers?</h2>
+<p>If not for learning, you almost certainly should NOT run your own DNS servers. As mentioned above, for smaller sites, your domain registrar probably provides DNS hosting for free. For users that need more control, greater uptime, or improved performance, there are paid DNS hosting providers that do a great job.</p>
+<p>One particularly interesting reason that quality DNS providers are able to provide such high levels of performance and resiliency is that they use <a href="https://www.cloudflare.com/learning/dns/what-is-anycast-dns/">Anycast</a> to route traffic to the closest available server. Unfortunately, <a href="https://labs.ripe.net/Members/samir_jafferali/build-your-own-anycast-network-in-nine-steps">setting up an Anycast network</a> is out of reach for most, making it nearly impossible to provide top-tier DNS performance and reliability.</p>
+<h2 id="automated-deploy">Automated deploy</h2>
+<p>If after all that you still want to run your own authoritative DNS servers, the good news is you can get setup in less than an hour. I like to write scripts to automate things like this, even if I don't plan to run them very often, as I find short scripts to be the most trustworthy source of documentation.</p>
+<p>Having the whole process automated also allows quick iteration which makes experimentation easy when you are first getting started.</p>
+<h4 id="spinning-up-cloud-server-instances">Spinning up cloud server instances</h4>
+<p>I chose to host my DNS servers with <a href="https://www.linode.com">Linode</a>. Of course you can use any VPS provider, but the script in this section only works to provision instances on Linode. If you are following along and want to use a different VPS provider, provision two linux (I used CentOS 8) machines in different data centers, then jump to the next section.</p>
+<p>Why do we need two servers? The DNS specification actually requires at least two authoritative name servers for each zone. See section 4.1 of <a href="https://tools.ietf.org/html/rfc1034">RFC 1034</a> for details.</p>
+<pre data-lang="python" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#72ab00;">for </span><span>linode_label, linode_region </span><span style="color:#72ab00;">in </span><span>[
+</span><span>            (</span><span style="color:#d07711;">&quot;ns1&quot;</span><span>, </span><span style="color:#d07711;">&quot;us-west&quot;</span><span>),  </span><span style="color:#7f8989;"># Fremont
+</span><span>            (</span><span style="color:#d07711;">&quot;ns2&quot;</span><span>, </span><span style="color:#d07711;">&quot;eu-west&quot;</span><span>),  </span><span style="color:#7f8989;"># Frankfurt
+</span><span>        ]:
+</span><span>    new_linode, _password </span><span style="color:#72ab00;">= </span><span>client.linode.</span><span style="color:#5597d6;">instance_create</span><span>(
+</span><span>        </span><span style="color:#d07711;">&quot;g6-nanode-1&quot;</span><span>,
+</span><span>        linode_region,
+</span><span>        </span><span style="color:#5597d6;">label</span><span style="color:#72ab00;">=</span><span>linode_label,
+</span><span>        </span><span style="color:#5597d6;">image</span><span style="color:#72ab00;">=</span><span style="color:#d07711;">&quot;linode/centos8&quot;</span><span>,
+</span><span>        </span><span style="color:#5597d6;">authorized_keys</span><span style="color:#72ab00;">=</span><span style="color:#d07711;">&quot;~/.ssh/id_ed25519.pub&quot;</span><span>)
+</span><span>
+</span><span>    </span><span style="color:#b39f04;">print</span><span>(</span><span style="color:#668f14;">f</span><span style="color:#d07711;">&quot;Created </span><span>{linode_label}</span><span style="color:#d07711;"> with at </span><span>{new_linode.ips.ipv4.public[</span><span style="color:#b3933a;">0</span><span>]}</span><span style="color:#d07711;">&quot;</span><span>)
+</span></code></pre>
+<p>The python snippet above creates two cloud servers using the Linode API, configured with my local SSH key to allow remote access. See the <a href="https://github.com/JoshMcguigan/infra/blob/fe24c52c77257723ebd575c47dfc48359e0c15a7/scripts/bootstrap-linode-infra.py">full source</a> for more details. The only setup needed before this is creating a Linode account and getting an API key for the script to use.</p>
+<h4 id="provisioning-dns-software-and-configuration">Provisioning DNS software and configuration</h4>
+<p>I use Ansible to script the server configuration.</p>
+<pre data-lang="yaml" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span>- </span><span style="color:#7f902a;">hosts</span><span>: </span><span style="color:#d07711;">all
+</span><span>  </span><span style="color:#7f902a;">roles</span><span>:
+</span><span>    - </span><span style="color:#d07711;">common
+</span><span>
+</span><span>- </span><span style="color:#7f902a;">hosts</span><span>: </span><span style="color:#d07711;">nameservers
+</span><span>  </span><span style="color:#7f902a;">roles</span><span>:
+</span><span>    - </span><span style="color:#d07711;">nameserver
+</span></code></pre>
+<p>The <code>common</code> role just disables password based login via SSH for improved security. You can review the <a href="https://github.com/JoshMcguigan/infra/tree/fe24c52c77257723ebd575c47dfc48359e0c15a7/ansible/roles/common">role definition</a> for details.</p>
+<p>More relevant is the <a href="https://github.com/JoshMcguigan/infra/tree/fe24c52c77257723ebd575c47dfc48359e0c15a7/ansible/roles/nameserver">nameserver role</a>.</p>
+<pre data-lang="yaml" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-yaml "><code class="language-yaml" data-lang="yaml"><span>- </span><span style="color:#7f902a;">name</span><span>: </span><span style="color:#d07711;">install bind
+</span><span>  </span><span style="color:#7f902a;">package</span><span>:
+</span><span>    </span><span style="color:#7f902a;">name</span><span>: </span><span style="color:#d07711;">bind
+</span><span>    </span><span style="color:#7f902a;">state</span><span>: </span><span style="color:#d07711;">present
+</span><span>  </span><span style="color:#7f902a;">notify</span><span>: </span><span style="color:#d07711;">bind enable
+</span><span>
+</span><span>- </span><span style="color:#7f902a;">name</span><span>: </span><span style="color:#d07711;">configure firewall
+</span><span>  </span><span style="color:#7f902a;">firewalld</span><span>:
+</span><span>    </span><span style="color:#7f902a;">service</span><span>: </span><span style="color:#d07711;">dns
+</span><span>    </span><span style="color:#7f902a;">immediate</span><span>: </span><span style="color:#b3933a;">yes
+</span><span>    </span><span style="color:#7f902a;">permanent</span><span>: </span><span style="color:#b3933a;">yes
+</span><span>    </span><span style="color:#7f902a;">state</span><span>: </span><span style="color:#d07711;">enabled
+</span><span>
+</span><span>- </span><span style="color:#7f902a;">name</span><span>: </span><span style="color:#d07711;">bind config
+</span><span>  </span><span style="color:#7f902a;">copy</span><span>:
+</span><span>    </span><span style="color:#7f902a;">src</span><span>: </span><span style="color:#d07711;">named.conf
+</span><span>    </span><span style="color:#7f902a;">dest</span><span>: </span><span style="color:#d07711;">/etc/named.conf
+</span><span>  </span><span style="color:#7f902a;">notify</span><span>: </span><span style="color:#d07711;">bind update
+</span><span>
+</span><span>- </span><span style="color:#7f902a;">name</span><span>: </span><span style="color:#d07711;">rhiyo zone config
+</span><span>  </span><span style="color:#7f902a;">template</span><span>:
+</span><span>    </span><span style="color:#7f902a;">src</span><span>: </span><span style="color:#d07711;">master.rhiyo.com.j2
+</span><span>    </span><span style="color:#7f902a;">dest</span><span>: </span><span style="color:#d07711;">/var/named/master.rhiyo.com
+</span><span>    </span><span style="color:#7f902a;">owner</span><span>: </span><span style="color:#d07711;">root
+</span><span>    </span><span style="color:#7f902a;">group</span><span>: </span><span style="color:#d07711;">named
+</span><span>  </span><span style="color:#7f902a;">notify</span><span>: </span><span style="color:#d07711;">bind update
+</span></code></pre>
+<p>There are many authoritative name servers, but I chose to use <a href="https://www.isc.org/bind/">BIND</a> due to its popularity. The first step in this role installs BIND and enables the service to start when the machine starts. The second step allows DNS through the system firewall, which by default blocks this traffic.</p>
+<p>The third step provisions the BIND configuration file.</p>
+<pre style="background-color:#f5f5f5;color:#1f1f1f;"><code><span>options {
+</span><span>	directory &quot;/var/named&quot;;
+</span><span>
+</span><span>	// version statement - inhibited for security
+</span><span>	version &quot;not available&quot;;
+</span><span>
+</span><span>	// disable all recursion - authoritative only
+</span><span>	recursion no;
+</span><span>
+</span><span>	// disables all zone transfer requests
+</span><span>	allow-transfer{ none; };
+</span><span>};
+</span><span>
+</span><span>zone &quot;rhiyo.com&quot; {
+</span><span>	type master;
+</span><span>	file &quot;master.rhiyo.com&quot;;
+</span><span>};
+</span></code></pre>
+<p>Disabling recursion configures our server as an authoritative server only (it can't be used as a recursive resolver). I've configured my servers to respond to DNS queries for the <code>rhiyo.com</code> zone, but you'll of course want to replace that with your own domain(s).</p>
+<p>The final step provisions the zone file.</p>
+<pre style="background-color:#f5f5f5;color:#1f1f1f;"><code><span>$TTL	1h
+</span><span>@  IN  SOA ns1.rhiyo.com. hostmaster.rhiyo.com. (
+</span><span>			      0 ; serial
+</span><span>			      3H ; refresh
+</span><span>			      15 ; retry
+</span><span>			      1w ; expire
+</span><span>			      3h ; min ttl
+</span><span>			     )
+</span><span>       IN  NS     ns1.rhiyo.com.
+</span><span>       IN  NS     ns2.rhiyo.com.
+</span><span>
+</span><span>ns1    IN  A      {{ hostvars.ns1.ansible_host }}
+</span><span>ns2    IN  A      {{ hostvars.ns2.ansible_host }}
+</span><span>
+</span><span># additional DNS records go here
+</span></code></pre>
+<p>This file is templated so I don't have to duplicate the public IP addresses of my name servers, since they are already specified in the <a href="https://github.com/JoshMcguigan/infra/blob/fe24c52c77257723ebd575c47dfc48359e0c15a7/ansible/inventory">inventory file</a>.</p>
+<h2 id="what-s-next">What's next?</h2>
+<p>You may have noticed that the configuration above only serves DNS records for the nameservers, and not any other hosts. This is because I'm not quite ready to switch over my real sites (this blog, for example) to this DNS setup.</p>
+<p>Before using this "in production" (quotes because I'll only be using it for hobby projects) there are a couple extra things I want to have.</p>
+<p>First on my list is monitoring. While failover happens automatically in the DNS protocol (in the case one name server is down, clients will automatically try another server), I still want some way of being notified if one of the machines goes down. I also want to have some plan in place for performing configuration, software, and server updates without downtime. Keep an eye out for future blog posts on these topics.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

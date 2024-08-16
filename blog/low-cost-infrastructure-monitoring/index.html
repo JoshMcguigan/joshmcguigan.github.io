@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Low-cost Infrastructure Monitoring</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Low-cost Infrastructure Monitoring</h1>
+
+<p class="subtitle">2019-12-28</p>
+
+<p>In my last post I <a href="/blog/run-your-own-dns-servers/">described how I'm running my own authoritative DNS servers</a>, and I left off with a note about how I wasn't ready to use these servers in production because I didn't have any monitoring configured.</p>
+<p>In this post, I'll explain why I decided to build a custom monitoring solution, and how you could create your own low-cost (free) monitoring tool.</p>
+<h2 id="goals-for-the-system">Goals for the system</h2>
+<p>Generally speaking, I wanted a monitoring solution which could confirm that each of my DNS servers was responding to queries. This is different from checking that my domains can be resolved, as DNS has automatic fail-over built into the client, and I want to know when even one of my servers is down.</p>
+<p>There are many monitoring-as-a-service vendors, but adding an additional vendor to your stack has some cost. Even if I would qualify for the free tier, there is the mental cost of learning a new platform.</p>
+<p>Additionally, I have some future infrastructure provisioning automation plans which I think could benefit from building on top of a monitoring tool that I fully control.</p>
+<h2 id="the-architecture">The architecture</h2>
+<p>I built a custom command line application in Rust, which acts as a DNS client and checks that my DNS servers respond correctly. If there are any failures, it uses the GitHub API to create an issue on my <a href="https://github.com/JoshMcguigan/infra">infrastructure repo</a>.</p>
+<p>I then deploy this application to Heroku, using the <code>Heroku Scheduler</code> to automatically run it every 10 minutes.</p>
+<p>The full source of the monitoring application at the time of writing is available <a href="https://github.com/JoshMcguigan/infra-tools/blob/ed341b2abe0816089adceed92e8af3789a63fdcb/src/main.rs">here</a> and an example of an automatically generated issue created by the tool is <a href="https://github.com/JoshMcguigan/infra/issues/4">here</a>.</p>
+<h2 id="deploying-the-monitoring-service">Deploying the monitoring service</h2>
+<p>While this monitoring tool is certainly the kind of thing you could run on a Raspberry Pi (in particular since it doesn't need a static IP), I chose to deploy it to Heroku. This is because I already have a couple other projects running on Heroku, including one very similar to this (a scheduled app rather than a long running server). Also, since my infrastructure is hosted with <a href="https://www.linode.com">Linode</a>, hosting the monitoring service elsewhere prevents common mode failures.</p>
+<p>Deploying a service like this to Heroku is fairly easy:</p>
+<ol>
+<li>Create a new Heroku app</li>
+<li>Install the <code>Heroku Scheduler</code> add-on</li>
+<li>Connect the new Heroku app to the git repo for your application</li>
+<li>If you are using Rust (as I am), configure Heroku to use a <a href="https://github.com/emk/heroku-buildpack-rust.git">Rust buildpack</a></li>
+<li>Set your environment variables (config variables) in Heroku (for me, this is <code>GITHUB_API_KEY</code>)</li>
+<li>Configure the <code>Heroku Scheduler</code> to run your binary (for me, <code>./target/release/monitoring</code>)</li>
+</ol>
+<h2 id="future-work">Future work</h2>
+<p>For now this tool is hard-coded to check DNS authoritative name servers, but the ideas presented are general enough that they could easily be used to monitor web servers or really any internet-accessible service. In the future, I'll likely expand this service to act as an HTTP(S) client so I can be alerted if my web servers go down.</p>
+<p>As it sits I believe this tool has satisfied my immediate goals. I now have monitoring configured for the DNS servers, it was developed/deployed without bringing a new vendor into my stack (I was already using GitHub and Heroku), and since I have full control of the code I've kept open the door for many future improvements.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

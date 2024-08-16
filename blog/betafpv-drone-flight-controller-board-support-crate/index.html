@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>BetaFPV F3 Drone Flight Controller - Board Support Crate</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">BetaFPV F3 Drone Flight Controller - Board Support Crate</h1>
+
+<p class="subtitle">2018-07-31</p>
+
+<p>In a <a href="/blog/betafpv-drone-flight-controller-hello-rust/">previous blog post</a>  I described how to get a very simple Rust program compiling for and running on the BetaFPV F3 drone flight controller. Since that time I've been working to create a board support crate to provide a high level API for the board.</p>
+<h2 id="what-is-a-board-support-crate">What is a Board Support Crate?</h2>
+<p>The BetaFPV F3 board is based on the STM32F303 microcontroller, which has strong support within the embedded Rust community. There is already a <a href="https://github.com/japaric/stm32f30x">STM32F30X device crate</a> which provides a safe API for direct register level access to the microcontroller. On top of that sits the <a href="https://github.com/japaric/stm32f30x-hal">stm32f30x-hal crate</a>, which implements higher level traits like <code>OutputPin</code> and <code>DelayMs</code>. Board support crates build on the <code>device</code> and <code>hal</code> crates, creating an API for the board which can be both more limiting and more expansive than the two crates it is built upon.</p>
+<p>Board support crates attempt to disallow configurations of the board which are not supported by its physical layout. An example of this is that on the BetaFPV F3 board, pin A06 is used to control the motor 1 output. It does not make sense to configure that pin as an input, so the board support crate does not allow that functionality.</p>
+<p>On the other side, the board support crate includes features of the board beyond those offered directly by the MCU. For the BetaFPV F3, this means it provides an API to work with the motion processing unit, as well as potentially the radio receiver in the future.</p>
+<p>When using the board support crate to do LED control, unlike in <a href="/blog/betafpv-drone-flight-controller-hello-rust/">my previous post</a> which was directly manipulating registers in unsafe Rust, or even building on top of the device or hal crate to safely manipulate pin C15 (the pin which controls the LED), all of the lower level details are abstracted away and we just control an <code>led</code> struct.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">let</span><span> Board {</span><span style="color:#668f14;">mut</span><span> led, </span><span style="color:#668f14;">mut</span><span> delay, </span><span style="color:#72ab00;">..</span><span>} </span><span style="color:#72ab00;">= </span><span>Board::new();
+</span><span>
+</span><span style="color:#72ab00;">loop </span><span>{
+</span><span>    led.</span><span style="color:#b39f04;">set_high</span><span>();
+</span><span>
+</span><span>    delay.</span><span style="color:#b39f04;">delay_ms</span><span>(</span><span style="color:#b3933a;">500</span><span style="color:#668f14;">u16</span><span>);
+</span><span>
+</span><span>    led.</span><span style="color:#b39f04;">set_low</span><span>();
+</span><span>
+</span><span>    delay.</span><span style="color:#b39f04;">delay_ms</span><span>(</span><span style="color:#b3933a;">500</span><span style="color:#668f14;">u16</span><span>);
+</span><span>}
+</span></code></pre>
+<h2 id="writing-a-board-support-crate">Writing a Board Support Crate</h2>
+<p>The goal of the board support crate is to expose the components of the board through a high level API, requiring as little knowledge of the underlying device as possible.</p>
+<p>Most Rust board support crates are written for development boards which have lots of IO and are very configurable for different use cases. For this reason, users are often required to interact with the underlying device and hal crates to properly configure the board.</p>
+<p>Since the BetaFPV F3 is not a development board it has a much more strictly defined feature set, which makes it easier to provide a high level API to the user without requiring knowledge of the underlying device or hal crates. The BetaFPV F3 board support crate provides a zero-configuration <code>new</code> method to create a <code>Board</code> struct, as shown below.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">let</span><span> Board 
+</span><span>    {
+</span><span>        </span><span style="color:#668f14;">mut</span><span> led,
+</span><span>        </span><span style="color:#668f14;">mut</span><span> mpu,
+</span><span>        </span><span style="color:#668f14;">mut</span><span> delay,
+</span><span>        </span><span style="color:#668f14;">mut</span><span> motor_1, 
+</span><span>        </span><span style="color:#668f14;">mut</span><span> motor_2, 
+</span><span>        </span><span style="color:#668f14;">mut</span><span> motor_3, 
+</span><span>        </span><span style="color:#668f14;">mut</span><span> motor_4,
+</span><span>    } </span><span style="color:#72ab00;">= </span><span>Board::new();
+</span><span>    
+</span><span style="color:#7f8989;">// do things with the board components here
+</span></code></pre>
+<h4 id="gpio-control">GPIO control</h4>
+<p>Board support crates capture the board's electrical schematic in code. The code sample below comes from the <code>Board::new()</code> method and shows how the <code>Led</code> and <code>MotorX</code> types are wrappers around the standard <code>embedded-hal</code> GPIO exposed by the <code>stm32f30x-hal</code> crate. It is the responsibility of the board support crate to ensure the correct pins are used for each output, and that those pins are configured appropriately.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">type </span><span style="color:#c23f31;">Led </span><span style="color:#72ab00;">= </span><span>PC15&lt;Output&lt;PushPull&gt;&gt;;
+</span><span style="color:#668f14;">type </span><span style="color:#c23f31;">Motor1 </span><span style="color:#72ab00;">= </span><span>PA6&lt;Output&lt;PushPull&gt;&gt;;
+</span><span style="color:#668f14;">type </span><span style="color:#c23f31;">Motor2 </span><span style="color:#72ab00;">= </span><span>PA7&lt;Output&lt;PushPull&gt;&gt;;
+</span><span style="color:#668f14;">type </span><span style="color:#c23f31;">Motor3 </span><span style="color:#72ab00;">= </span><span>PB8&lt;Output&lt;PushPull&gt;&gt;;
+</span><span style="color:#668f14;">type </span><span style="color:#c23f31;">Motor4 </span><span style="color:#72ab00;">= </span><span>PB9&lt;Output&lt;PushPull&gt;&gt;;
+</span><span>
+</span><span style="color:#668f14;">let mut</span><span> gpioa </span><span style="color:#72ab00;">=</span><span> dp.</span><span style="color:#b3933a;">GPIOA</span><span>.</span><span style="color:#b39f04;">split</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rcc.ahb);
+</span><span style="color:#668f14;">let mut</span><span> gpiob </span><span style="color:#72ab00;">=</span><span> dp.</span><span style="color:#b3933a;">GPIOB</span><span>.</span><span style="color:#b39f04;">split</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rcc.ahb);
+</span><span style="color:#668f14;">let mut</span><span> gpioc </span><span style="color:#72ab00;">=</span><span> dp.</span><span style="color:#b3933a;">GPIOC</span><span>.</span><span style="color:#b39f04;">split</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> rcc.ahb);
+</span><span>
+</span><span style="color:#668f14;">let</span><span> led </span><span style="color:#72ab00;">=</span><span> gpioc
+</span><span>    .pc15
+</span><span>    .</span><span style="color:#b39f04;">into_push_pull_output</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> gpioc.moder, </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> gpioc.otyper);
+</span><span style="color:#668f14;">let</span><span> motor_1 </span><span style="color:#72ab00;">=</span><span> gpioa
+</span><span>    .pa6
+</span><span>    .</span><span style="color:#b39f04;">into_push_pull_output</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> gpioa.moder, </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> gpioa.otyper);
+</span><span style="color:#668f14;">let</span><span> motor_2 </span><span style="color:#72ab00;">=</span><span> gpioa
+</span><span>    .pa7
+</span><span>    .</span><span style="color:#b39f04;">into_push_pull_output</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> gpioa.moder, </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> gpioa.otyper);
+</span><span style="color:#668f14;">let</span><span> motor_3 </span><span style="color:#72ab00;">=</span><span> gpiob
+</span><span>    .pb8
+</span><span>    .</span><span style="color:#b39f04;">into_push_pull_output</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> gpiob.moder, </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> gpiob.otyper);
+</span><span style="color:#668f14;">let</span><span> motor_4 </span><span style="color:#72ab00;">=</span><span> gpiob
+</span><span>    .pb9
+</span><span>    .</span><span style="color:#b39f04;">into_push_pull_output</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> gpiob.moder, </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> gpiob.otyper);
+</span></code></pre>
+<h4 id="motion-processing-unit">Motion Processing Unit</h4>
+<p>Interfacing with the motion processing unit, in this case the MPU6000, is a bit more difficult. The MPU6000 combines a three-axis accelerometer with a three-axis gyrometer and exposes this data via the SPI bus. The job of the board support crate is to correctly configure an MPU6000 device driver instance and expose the resulting device struct via the board support crate API. Unfortunately, there was no existing Rust MPU6000 driver.</p>
+<p>I started writing a driver, but fortunately soon after discovered an embedded Rust driver existed for a related device, the <a href="https://github.com/japaric/mpu9250">MPU9250</a>. Comparing the <a href="https://www.invensense.com/wp-content/uploads/2015/02/MPU-6000-Register-Map1.pdf">MPU6000 register map</a> to the <a href="https://www.invensense.com/wp-content/uploads/2015/02/RM-MPU-9250A-00-v1.6.pdf">MPU9250 register map</a> revealed a few differences, so I <a href="https://github.com/JoshMcguigan/mpu9250">forked</a> the MPU9250 driver and tweaked it to work with the MPU6000.</p>
+<p>I also had to <a href="https://github.com/joshmcguigan/stm32f30x-hal">fork</a> the <a href="https://github.com/japaric/stm32f30x-hal">original</a> hal crate for the STM32F30X in order to expose the pins needed to communicate with the MPU. This was as simple as uncommenting out a few lines in the original source.</p>
+<p>The following code snippet demonstrates reading data from the accelerometer using the board support crate (available in the examples folder as <code>mpu.rs</code>).</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">let</span><span> Board {</span><span style="color:#668f14;">mut</span><span> led, </span><span style="color:#668f14;">mut</span><span> mpu, </span><span style="color:#668f14;">mut</span><span> delay, </span><span style="color:#72ab00;">..</span><span>} </span><span style="color:#72ab00;">= </span><span>Board::new();
+</span><span>
+</span><span style="color:#7f8989;">// https://www.invensense.com/wp-content/uploads/2015/02/MPU-6000-Register-Map1.pdf
+</span><span style="color:#7f8989;">// expected 0x68 based on register map
+</span><span style="color:#7f8989;">// some startup time is required or this assertion fails
+</span><span>delay.</span><span style="color:#b39f04;">delay_ms</span><span>(</span><span style="color:#b3933a;">1000</span><span style="color:#668f14;">u16</span><span>);
+</span><span style="color:#a2a001;">assert_eq!</span><span>(mpu.</span><span style="color:#b39f04;">who_am_i</span><span>().</span><span style="color:#b39f04;">unwrap</span><span>(), </span><span style="color:#b3933a;">0x68</span><span>);
+</span><span>
+</span><span style="color:#7f8989;">// seeing a blinking LED means the assertion did not fail
+</span><span style="color:#72ab00;">for</span><span> _i </span><span style="color:#72ab00;">in </span><span style="color:#b3933a;">0</span><span style="color:#72ab00;">..</span><span style="color:#b3933a;">5 </span><span>{
+</span><span>    led.</span><span style="color:#b39f04;">set_high</span><span>();
+</span><span>
+</span><span>    delay.</span><span style="color:#b39f04;">delay_ms</span><span>(</span><span style="color:#b3933a;">500</span><span style="color:#668f14;">u16</span><span>);
+</span><span>
+</span><span>    led.</span><span style="color:#b39f04;">set_low</span><span>();
+</span><span>
+</span><span>    delay.</span><span style="color:#b39f04;">delay_ms</span><span>(</span><span style="color:#b3933a;">500</span><span style="color:#668f14;">u16</span><span>);
+</span><span>}
+</span><span>
+</span><span style="color:#7f8989;">// LED controlled by orientation of board
+</span><span style="color:#72ab00;">loop </span><span>{
+</span><span>    </span><span style="color:#668f14;">let</span><span> board_up </span><span style="color:#72ab00;">=</span><span> mpu.</span><span style="color:#b39f04;">accel</span><span>().</span><span style="color:#b39f04;">unwrap</span><span>().z </span><span style="color:#72ab00;">&gt; </span><span style="color:#b3933a;">0</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#72ab00;">if</span><span> board_up {
+</span><span>        led.</span><span style="color:#b39f04;">set_high</span><span>();
+</span><span>    } </span><span style="color:#72ab00;">else </span><span>{
+</span><span>        led.</span><span style="color:#b39f04;">set_low</span><span>();
+</span><span>    }
+</span><span>
+</span><span>    delay.</span><span style="color:#b39f04;">delay_ms</span><span>(</span><span style="color:#b3933a;">500</span><span style="color:#668f14;">u16</span><span>);
+</span><span>}
+</span></code></pre>
+<h4 id="debugging">Debugging</h4>
+<p>It would be very difficult to continue development on this board without some form of feedback (beyond a single LED). To achieve this, I created a new <a href="https://github.com/JoshMcguigan/bit-bang-serial">bit-bang-serial</a> crate with the goal of using one of the motor output ports to send debugging data back to my development machine.</p>
+<p>Initial attempts to use this crate with the BetaFPV board failed, although it was working when tested with the STM32F3DISCOVERY. Analysis with an oscilloscope revealed the reason for this. While the BetaFPV F3 board outputs had reasonably quick rise times, the fall times were very slow, and the output didn't return all the way back to 0v when commanded off.</p>
+<p>On the BetaFPV board, unlike the STM32F3DISCOVERY, the outputs are first passed through FETs to allow them to drive high power loads (up to 6.3 amps according to the manufacturer). This means the <code>PushPull</code> configuration on the output pins of the MCU can't actually pull the output back to ground when commanded off. Experimenting with various pulldown resistors, I found the fall time improved significantly with 10 ohms of resistance between the <code>tx</code> and <code>gnd</code> pins. I'd guess the results would be even better with less resistance, but I didn't have the resistors around to try that.</p>
+<p>With the pulldown resistor, fall time is on the order of 10ms, and I am able to communicate reliably enough for debugging purposes at 9600 baud.</p>
+<h2 id="use">Use</h2>
+<p>If you have a BetaFPV F3 board, running the examples from the board support crate is straightforward. First you'll need to install <a href="http://dfu-util.sourceforge.net/">dfu-util</a>, then clone the <a href="https://github.com/JoshMcguigan/betafpv-f3">BetaFPV F3 board support crate</a>. Hold the boot button on the board as you connect the USB cable to start the board in bootloader mode. Finally, run <code>./flash-example led-control</code> to compile the <code>led-control</code> example and flash it to the board. As of this writing there are four examples available:</p>
+<ul>
+<li>led-control</li>
+<li>motor-control</li>
+<li>mpu</li>
+<li>serial-comm</li>
+</ul>
+<h2 id="future-work">Future Work</h2>
+<p>This board support crate is certainly a work in progress, but much of the future development will likely take place in other crates. Sensor fusion, combining the accelerometer and gyrometer data to accurately measure the orientation of the board, will be my next focus. There is a <a href="https://github.com/japaric/madgwick">madgwick</a> crate which may provide a starting point, but it expects to also have magnetometer data, which this board does not have.</p>
+<p>Once the sensor fusion implementation is complete (or at least an initial prototype is ready for testing), work can begin on radio receiver support and flight control code.</p>
+<p>It would be helpful to have the USB port available for debugging, although that would require writing a full USB stack in <code>nostd</code> Rust, which as far as I know has not been done yet. Alternatively, it may be possible (and easier) to repurpose some of the pins from the USB port and use a different communication protocol, which would probably be sufficient for debugging purposes in the short term.</p>
+<h2 id="getting-involved">Getting involved</h2>
+<p>The <a href="https://github.com/JoshMcguigan/betafpv-f3">BetaFPV F3 board support crate</a> is available on GitHub. The best way to get started is to purchase a BetaFPV F3 board and run the examples. The specific board I bought is available <a href="https://www.amazon.com/BETAFPV-Brushed-Controller-Integrated-Receiver/dp/B074GXKKZ7">here</a>. A slightly more expensive, although potentially more fun, alternative would be to purchase a <a href="https://www.amazon.com/Beta85-Micro-Quadcopter-Receiver-8-5x20/dp/B078WRLGPQ">BetaFPV drone which includes the F3 flight controller</a>. Note that you'll also need a battery charger and radio transmitter if you want to fly the drone with the stock firmware, as it doesn't come with that equipment.</p>
+<p>Drone flight is a complex problem, and I'd welcome additional contributors to this project. Even in these early stages, the work has spanned several crates, and I can see several more coming out of this. If you are interested in getting involved, please feel free to reach out and I'll do what I can to help you get started.</p>
+<h2 id="references-resources-and-further-reading">References, Resources, and Further Reading</h2>
+<ul>
+<li>Code references
+<ul>
+<li><a href="https://github.com/JoshMcguigan/betafpv-f3">BetaFPV F3 board support crate</a></li>
+<li><a href="https://github.com/japaric/stm32f30x-hal">The original stm32f30x-hal crate</a> and <a href="https://github.com/joshmcguigan/stm32f30x-hal">my fork adding support for the pins used by the BetaFPV F3 board to communicate to the MPU</a></li>
+<li><a href="https://github.com/japaric/stm32f30x">stm32f30x</a></li>
+<li><a href="https://github.com/japaric/mpu9250">The original MPU9250 driver</a> and <a href="https://github.com/JoshMcguigan/mpu9250">my fork supporting the MPU6000</a></li>
+<li><a href="https://github.com/JoshMcguigan/bit-bang-serial">bit-bang-serial</a></li>
+<li><a href="https://github.com/japaric/madgwick">madgwick</a></li>
+</ul>
+</li>
+<li>BetaFPV F3 pin configurations
+<ul>
+<li><a href="https://betafpv.freshdesk.com/support/solutions/articles/27000044289-cli-dump-of-fcs">From the manufacturer</a></li>
+<li><a href="https://github.com/betaflight/betaflight/tree/master/src/main/target/BETAFLIGHTF3">From the BetaFlight project</a></li>
+</ul>
+</li>
+<li><a href="http://dfu-util.sourceforge.net/">dfu-util</a> - A utility for flashing embedded devices that support the DFU protocol</li>
+<li><a href="http://blog.japaric.io/brave-new-io/">Brave new I/O</a> - A blog post by Jorge Aparicio which describes the relationship between the device, hal, and board support crates</li>
+</ul>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

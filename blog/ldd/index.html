@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>A surprising fact about ldd</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">A surprising fact about ldd</h1>
+
+<p class="subtitle">2023-07-05</p>
+
+<p><a href="https://man7.org/linux/man-pages/man1/ldd.1.html">ldd</a> is a utility to print the shared objects required by a program or shared object, as well as the location where the objects are found. An example invocation, stolen from the man page and lightly edited, follows:</p>
+<pre data-lang="sh" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#5597d6;">$</span><span> ldd /bin/ls
+</span><span>    </span><span style="color:#5597d6;">linux-vdso.so.1</span><span> (0x00007ffcc3563000)
+</span><span>    </span><span style="color:#5597d6;">libc.so.6</span><span> =</span><span style="color:#72ab00;">&gt;</span><span> /lib64/libc.so.6 (0x00007f87e4e92000)
+</span><span>    </span><span style="color:#5597d6;">/lib64/ld-linux-x86-64.so.2</span><span> (0x00005574bf12e000)
+</span></code></pre>
+<p>The first line lists <a href="https://man7.org/linux/man-pages/man7/vdso.7.html">vdso</a>, which is a special shared object injected by the kernel. No path to this object is listed because, unlike other shared objects, it doesn't actually exist on disk.</p>
+<p>The second line lists <code>libc</code> and shows that it is found at <code>/lib64/libc.so.6</code>. This path is determined by the rules of the dynamic linker itself, <a href="https://man7.org/linux/man-pages/man8/ld.so.8.html">ld-linux.so</a>, which is listed on the third line.</p>
+<p>However, running that command on my machine results in the following (again lightly edited):</p>
+<pre data-lang="sh" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#5597d6;">$</span><span> ldd /bin/ls
+</span><span>    </span><span style="color:#5597d6;">linux-vdso.so.1</span><span> (0x00007fff2e1f3000)
+</span><span>    </span><span style="color:#5597d6;">libc.so.6</span><span> =</span><span style="color:#72ab00;">&gt;</span><span> /usr/lib/libc.so.6 (0x00007f79ca26c000)
+</span><span>    </span><span style="color:#5597d6;">/lib64/ld-linux-x86-64.so.2</span><span> =</span><span style="color:#72ab00;">&gt;</span><span> /usr/lib64/ld-linux-x86-64.so.2 (0x00007f79ca4ab000)
+</span></code></pre>
+<p>Note the dynamic linker, which is specified by <code>/bin/ls</code> as the absolute path <code>/lib64/ld-linux-x86-64.so.2</code>, is shown as being found at <code>/usr/lib64/ld-linux-x86-64.so.2</code>. Setting aside the fact that these are actually the same files (by the magic of symbolic links) because the linker/ldd doesn't know this, why is something which is specified as an absolute path being looked up at all?</p>
+<h2 id="shared-objects-choose-their-dynamic-linker">shared objects choose their dynamic linker</h2>
+<p>Shared objects in the elf format are able to choose their dynamic linker.</p>
+<pre style="background-color:#f5f5f5;color:#1f1f1f;"><code><span>$ readelf -l /bin/ls | grep interpreter
+</span><span>      [Requesting program interpreter: /lib64/ld-linux-x86-64.so.2]
+</span></code></pre>
+<p>Based on this, I would have assumed that <code>ldd</code> would somehow base its output on the specific linker requested (as "interpreter") by the program or shared object being queried.</p>
+<h2 id="ldd-implementation"><code>ldd</code> implementation</h2>
+<p>In a <a href="https://www.gnu.org/software/libc/">glibc</a> based environment, <code>ldd</code> is a shell script. See for yourself with <code>cat $(which ldd)</code>.</p>
+<pre data-lang="sh" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#5597d6;">$</span><span> cat $(</span><span style="color:#5597d6;">which</span><span> ldd) </span><span style="color:#72ab00;">| </span><span style="color:#5597d6;">grep</span><span> RTLDLIST=
+</span><span>
+</span><span style="color:#5597d6;">RTLDLIST</span><span style="color:#72ab00;">=</span><span style="color:#d07711;">&quot;/usr/lib/ld-linux.so.2 /usr/lib64/ld-linux-x86-64.so.2 /usr/libx32/ld-linux-x32.so.2&quot;
+</span></code></pre>
+<p>A surprising fact about <code>ldd</code> is that its behavior is not based on the dynamic linker requested by the program (or shared object) being queried. Rather <code>ldd</code> invokes a standard linker from one of a few expected locations, and asks that linker for the linking data in order to present it to the user.</p>
+<h2 id="ldd-by-hand"><code>ldd</code> by hand</h2>
+<p>Effectively all the <code>ldd</code> script is doing is invoking the standard linker with some special environment variables set so that it prints the linking data that the user cares about.</p>
+<pre data-lang="sh" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#5597d6;">$</span><span> LD_TRACE_LOADED_OBJECTS=1 /usr/lib64/ld-linux-x86-64.so.2 /bin/ls
+</span><span>    </span><span style="color:#5597d6;">linux-vdso.so.1</span><span> (0x00007ffed0e9b000)
+</span><span>    </span><span style="color:#5597d6;">libc.so.6</span><span> =</span><span style="color:#72ab00;">&gt;</span><span> /usr/lib/libc.so.6 (0x00007fd1526ea000)
+</span><span>    </span><span style="color:#5597d6;">/lib64/ld-linux-x86-64.so.2</span><span> =</span><span style="color:#72ab00;">&gt;</span><span> /usr/lib64/ld-linux-x86-64.so.2 (0x00007fd152929000)
+</span></code></pre>
+<p>Now that we are invoking the dynamic linker ourselves, we can choose the one which is actually requested by the program (<code>/bin/ls</code> in our example).</p>
+<pre data-lang="sh" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#5597d6;">$</span><span> LD_TRACE_LOADED_OBJECTS=1 $(</span><span style="color:#5597d6;">readelf -l</span><span> /bin/ls \
+</span><span>    </span><span style="color:#72ab00;">| </span><span style="color:#5597d6;">grep</span><span> interpreter \
+</span><span>    </span><span style="color:#72ab00;">| </span><span style="color:#5597d6;">cut -d</span><span style="color:#d07711;">&#39;:&#39;</span><span style="color:#5597d6;"> -f2 </span><span>\
+</span><span>    </span><span style="color:#72ab00;">| </span><span style="color:#5597d6;">tr -d </span><span style="color:#d07711;">&#39; ]&#39;</span><span>) \
+</span><span>    /bin/ls
+</span><span>
+</span><span>    </span><span style="color:#5597d6;">linux-vdso.so.1</span><span> (0x00007ffc971ca000)
+</span><span>    </span><span style="color:#5597d6;">libc.so.6</span><span> =</span><span style="color:#72ab00;">&gt;</span><span> /usr/lib/libc.so.6 (0x00007f127ca05000)
+</span><span>    </span><span style="color:#5597d6;">/lib64/ld-linux-x86-64.so.2</span><span> (0x00007f127cc44000)
+</span></code></pre>
+<h2 id="ld-linux-so-no-longer-mapped"><code>ld-linux.so</code> no longer mapped</h2>
+<p>When we ask the linker that <code>/bin/ls</code> requested (as its "interpreter"), <code>ld-linux.so</code> is no longer shown as mapped from one absolute path to the other. This helps explain what is happening in the cases where <code>ldd</code> does show the absolute path to the linker as being mapped somewhere else - in a real execution of this program the kernel would use the dynamic linker requested, there would be no lookup involved. But due to the implementation of <code>ldd</code>, specifically how it always uses a standard linker rather than the one specified by the shared object or program being queried, it can sometimes look like the dynamic linker itself is being found at some alternate path.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>I'm not aware of any cases of programs specifying a non-standard dynamic linker, however, if one did, there is no guarantee that the output from <code>ldd</code> will be accurate when run on that program.</p>
+<p>Of course, even if <code>ldd</code> was willing to take the security risk of running a potentially untrusted dynamic linker, there is no guarantee that linker would provide the linking data that the user is requsting when run with the same environment variables set. For that reason, there is no general way to know how an arbitrary dynamic linker might map the set of shared objects requested by a program to specific file paths on your machine without running the program.</p>
+<h2 id="a-note-about-musl">A note about musl</h2>
+<p>This investigation was focused on <code>glibc</code> based platforms, however <code>musl</code> <code>ldd</code> is implemented similarly (they just use a symlink to point <code>/bin/ldd</code> to the dynamic linker rather than creating a wrapper shell script).</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

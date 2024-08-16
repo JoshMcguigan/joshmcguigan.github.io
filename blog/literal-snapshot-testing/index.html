@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Literal snapshot testing</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Literal snapshot testing</h1>
+
+<p class="subtitle">2024-05-05</p>
+
+<p>Snapshot testing is a type of so-called "golden master" testing, where an assertion is made that a value matches some previously captured output. <a href="https://insta.rs/">Insta</a> is a library providing snapshot test tooling in the Rust ecosystem, and their <a href="https://insta.rs/#what-does-this-look-like">description of snapshot testing</a> is a useful introduction.</p>
+<h2 id="snapshot-testing-is-most-often-done-on-text">Snapshot testing is most often done on text</h2>
+<p>Even when used for testing UI components, as commonly done in the <a href="https://jestjs.io/docs/snapshot-testing">React ecosystem using Jest</a>, snapshot testing is most often done on text. In React, the snapshots are made up of the component as rendered into HTML, rather than a visual representation. Presumably this is because browsers may not visually render the same HTML/CSS with pixel perfect consistency, so it is more stable to test the HTML output directly.</p>
+<h2 id="snapshot-testing-an-embedded-systems-user-interface-with-images">Snapshot testing an embedded systems user interface.. with images</h2>
+<p>I've been working on a <a href="https://github.com/JoshMcguigan/mesozoic">firmware for the PineTime smartwatch</a>, and wanted a way to develop automated tests of the user interface. To scratch this itch I developed some barebones test infrastructure supporting snapshot testing, using PNGs captured by running the user interface code inside a simulator.</p>
+<ul>
+<li><a href="https://github.com/JoshMcguigan/mesozoic/blob/52363b79e55163409d659ec8c74ed645a03d759a/app/src/test_infra.rs">test infrastructure</a></li>
+<li><a href="https://github.com/JoshMcguigan/mesozoic/blob/52363b79e55163409d659ec8c74ed645a03d759a/app/src/app.rs#L278">example of the test code</a></li>
+<li><a href="https://github.com/JoshMcguigan/mesozoic/blob/52363b79e55163409d659ec8c74ed645a03d759a/app/snapshots/mesozoic_app%3A%3Aapp%3A%3Atests%3A%3Ainit_and_paired.golden.png">"golden record" snapshot</a></li>
+</ul>
+<p>The test code first uses a simulator to render the user interface into a PNG. It then checks for an existing snapshot. If there is one, it asserts that the current PNG matches the snapshot. If the developer is purposefully making a UI change, they can compare the new and old snapshots to ensure the change matches their expectations. If a snapshot doesn't exist yet, the current PNG is saved as the golden record. If the developer is adding a new test, they should manually validate that this snapshot matches the intended UI.</p>
+<h2 id="snapshot-diffs-in-pull-requests">Snapshot diffs in pull requests</h2>
+<p>Snapshots are saved in the git repository. There can be downsides to including large files in git, but these PNG files are actually smaller than most text files in the repo. And although git itself doesn't natively know how to nicely diff images, both github and gitlab do provide nice tooling for diff'ing changes to an image. You can see an example in this <a href="https://github.com/JoshMcguigan/mesozoic/pull/2/files#diff-2a94fc494a26e2b5b3d14ceaf2c07a125646cfc58e5f22e6cc0792a246f3d0e6">pull request modifying the battery state UI</a>.</p>
+<h2 id="paving-the-road-ahead">Paving the road ahead</h2>
+<p>While this snapshot tooling is useful in its current state, there is a lot of missing polish:</p>
+<ul>
+<li>Snapshots updates are done by manually deleting the golden record to force a new one to be recorded</li>
+<li>The current assertion is done using the standard <code>assert_eq</code> macro, which prints out all the bytes two PNGs when a test fails</li>
+<li>When a test fails, comparing snapshots is a manual process with no tooling built around it to simplify the process</li>
+<li>There is some clunkiness dealing with picking a name for the saved golden record file
+<ul>
+<li>Insta <a href="https://internals.rust-lang.org/t/discovering-the-current-test-name/15325">also deals with this</a>, although they seem to have found a solution which has a nicer developer experience than what I settled for</li>
+</ul>
+</li>
+</ul>
+<p>There are probably lots more things missing here that I haven't run into yet. That said, even in its current (very simplistic) state, I find these tests improve my confidence when making changes to UI code.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

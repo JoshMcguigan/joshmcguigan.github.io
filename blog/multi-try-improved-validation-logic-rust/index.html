@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Combine Results for Improved Rust Validation Logic</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Combine Results for Improved Rust Validation Logic</h1>
+
+<p class="subtitle">2019-02-23</p>
+
+<p>The error handling features within Rust are some of my favorite things about the language. The <code>Result</code> and <code>Option</code> types save developers from using implicit placeholder values (things like <code>-1</code> and <code>null</code> respectively) in almost all cases. Additionally, the <code>try</code>/<code>?</code> operators make it ergonomic to handle these error conditions, while the compiler ensures you can't use the underlying value without first confirming it is ok.</p>
+<p>This system works great when you are in a function which returns a <code>Result</code> and you want to exit at the first error you come to. However, it can be challenging if your goal is to try a few failure-prone things and return each of the errors, rather than just the first error. This is the problem <a href="https://github.com/JoshMcguigan/multi_try">multi_try</a> attempts to solve.</p>
+<h2 id="a-simple-validation-function">A Simple Validation Function</h2>
+<p>Throughout this blog post we'll use the problem of validating an email to demonstrate the various approaches. Our goal will be to convert from the <code>Email</code> struct to the <code>ValidatedEmail</code> struct, and return <code>EmailValidationErr</code> if there are any problems.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">struct </span><span style="color:#c23f31;">Email</span><span>&lt;</span><span style="color:#668f14;">&#39;a</span><span>&gt; {
+</span><span>    </span><span style="color:#5597d6;">to</span><span>: </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">&#39;a str</span><span>,
+</span><span>    </span><span style="color:#5597d6;">from</span><span>: </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">&#39;a str</span><span>,
+</span><span>    </span><span style="color:#5597d6;">subject</span><span>: </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">&#39;a str</span><span>,
+</span><span>    </span><span style="color:#5597d6;">body</span><span>: </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">&#39;a str</span><span>,
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">ValidatedEmail</span><span>&lt;</span><span style="color:#668f14;">&#39;a</span><span>&gt; {
+</span><span>    </span><span style="color:#5597d6;">to</span><span>: </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">&#39;a str</span><span>,
+</span><span>    </span><span style="color:#5597d6;">from</span><span>: </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">&#39;a str</span><span>,
+</span><span>    </span><span style="color:#5597d6;">subject</span><span>: </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">&#39;a str</span><span>,
+</span><span>    </span><span style="color:#5597d6;">body</span><span>: </span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">&#39;a str</span><span>,
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">enum </span><span style="color:#c23f31;">EmailValidationErr </span><span>{
+</span><span>    InvalidEmailAddress,
+</span><span>    InvalidRecipientEmailAddress,
+</span><span>    InvalidSenderEmailAddress,
+</span><span>    InvalidSubject,
+</span><span>    InvalidBody,
+</span><span>}
+</span></code></pre>
+<p>The function below demonstrates a typical approach to performing this type of validation which will validate the <code>to</code>, <code>from</code>, <code>subject</code>, and <code>body</code> fields in that order, and return either the <code>ValidatedEmail</code> or the first <code>EmailValidationErr</code>.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">fn </span><span style="color:#c23f31;">validate_email</span><span>(</span><span style="color:#5597d6;">email</span><span>: Email) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;ValidatedEmail, EmailValidationErr&gt; {
+</span><span>    </span><span style="color:#a2a001;">Ok</span><span>(
+</span><span>        ValidatedEmail {
+</span><span>            to: </span><span style="color:#b39f04;">validate_address</span><span>(email.to)
+</span><span>                    .</span><span style="color:#b39f04;">map_err</span><span>(|_| EmailValidationErr::InvalidRecipientEmailAddress)</span><span style="color:#72ab00;">?</span><span>,
+</span><span>            from: </span><span style="color:#b39f04;">validate_address</span><span>(email.from)
+</span><span>                    .</span><span style="color:#b39f04;">map_err</span><span>(|_| EmailValidationErr::InvalidSenderEmailAddress)</span><span style="color:#72ab00;">?</span><span>,
+</span><span>            subject: </span><span style="color:#b39f04;">validate_subject</span><span>(email.subject)</span><span style="color:#72ab00;">?</span><span>,
+</span><span>            body: </span><span style="color:#b39f04;">validate_body</span><span>(email.body)</span><span style="color:#72ab00;">?</span><span>,
+</span><span>        }
+</span><span>    )
+</span><span>}
+</span></code></pre>
+<p><a href="https://play.rust-lang.org/?version=stable&amp;mode=debug&amp;edition=2018&amp;gist=178e9f4a6a3f4351f7b24f7fae113f3f">Rust Playground</a></p>
+<h2 id="returning-all-errors">Returning All Errors</h2>
+<p>If these error messages are being returned to a user, it would be nice if we could provide a message about all of the validation errors, rather than just the first error. A potential approach for this is demonstrated below.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">fn </span><span style="color:#c23f31;">validate_email</span><span>(</span><span style="color:#5597d6;">email</span><span>: Email) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;ValidatedEmail, </span><span style="color:#a2a001;">Vec</span><span>&lt;EmailValidationErr&gt;&gt; {
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> errors </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">vec!</span><span>[];
+</span><span>    </span><span style="color:#668f14;">let</span><span> to </span><span style="color:#72ab00;">= </span><span style="color:#b39f04;">validate_address</span><span>(email.to)
+</span><span>        .</span><span style="color:#b39f04;">unwrap_or_else</span><span>(|</span><span style="color:#5597d6;">_e</span><span>| {
+</span><span>            errors.</span><span style="color:#b39f04;">push</span><span>(EmailValidationErr::InvalidRecipientEmailAddress);
+</span><span>            </span><span style="color:#d07711;">&quot;&quot;
+</span><span>        });
+</span><span>    </span><span style="color:#668f14;">let</span><span> from </span><span style="color:#72ab00;">= </span><span style="color:#b39f04;">validate_address</span><span>(email.from)
+</span><span>        .</span><span style="color:#b39f04;">unwrap_or_else</span><span>(|</span><span style="color:#5597d6;">_e</span><span>| {
+</span><span>            errors.</span><span style="color:#b39f04;">push</span><span>(EmailValidationErr::InvalidSenderEmailAddress);
+</span><span>            </span><span style="color:#d07711;">&quot;&quot;
+</span><span>        });
+</span><span>    </span><span style="color:#668f14;">let</span><span> subject </span><span style="color:#72ab00;">= </span><span style="color:#b39f04;">validate_subject</span><span>(email.subject)
+</span><span>        .</span><span style="color:#b39f04;">unwrap_or_else</span><span>(|</span><span style="color:#5597d6;">e</span><span>| {
+</span><span>            errors.</span><span style="color:#b39f04;">push</span><span>(e);
+</span><span>            </span><span style="color:#d07711;">&quot;&quot;
+</span><span>        });
+</span><span>    </span><span style="color:#668f14;">let</span><span> body </span><span style="color:#72ab00;">= </span><span style="color:#b39f04;">validate_body</span><span>(email.body)
+</span><span>        .</span><span style="color:#b39f04;">unwrap_or_else</span><span>(|</span><span style="color:#5597d6;">e</span><span>| {
+</span><span>            errors.</span><span style="color:#b39f04;">push</span><span>(e);
+</span><span>            </span><span style="color:#d07711;">&quot;&quot;
+</span><span>        });
+</span><span>
+</span><span>    </span><span style="color:#72ab00;">if !</span><span>errors.</span><span style="color:#b39f04;">is_empty</span><span>() {
+</span><span>        </span><span style="color:#72ab00;">return </span><span style="color:#a2a001;">Err</span><span>(errors);
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#a2a001;">Ok</span><span>( ValidatedEmail { to, from, subject, body } )
+</span><span>}
+</span></code></pre>
+<p>Note how the error type in the return value changed from a <code>EmailValidationErr</code> to a <code>Vec&lt;EmailValidationErr&gt;</code>, indicating we are now returning all of the validation errors rather than just the first. This could provide a nice UX benefit, but we pay the price in code complexity.</p>
+<p>Most critically we are giving up on an important guarantee that idiomatic Rust typically provides us. In order to continue past the first error, we use <code>unwrap_or_else</code> to provide a placeholder value to the fields of our email struct (in this case we use the empty string), and then we push errors into the error vec. The downside to this approach is that once we initialize the fields to an empty string, the compiler no longer knows/cares that they are invalid, so it cannot enforce that we check for errors before using the values (this code would still compile if I removed the <code>if !errors.is_empty()</code> block).</p>
+<p><a href="https://play.rust-lang.org/?version=stable&amp;mode=debug&amp;edition=2018&amp;gist=463daedba471031c98e7237ee00d91d8">Rust Playground</a></p>
+<h2 id="introducing-multi-try">Introducing multi_try</h2>
+<p>What we really want is to combine the compiler guarantees of the first approach, with the UX benefits of the second approach, and that is where <a href="https://github.com/JoshMcguigan/multi_try">multi_try</a> comes in.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>multi_try::MultiTry;
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">validate_email</span><span>(</span><span style="color:#5597d6;">email</span><span>: Email) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;ValidatedEmail, </span><span style="color:#a2a001;">Vec</span><span>&lt;EmailValidationErr&gt;&gt; {
+</span><span>    </span><span style="color:#668f14;">let </span><span>(to, from, subject, body) </span><span style="color:#72ab00;">= </span><span style="color:#b39f04;">validate_address</span><span>(email.to).</span><span style="color:#b39f04;">map_err</span><span>(|_| {
+</span><span>        EmailValidationErr::InvalidRecipientEmailAddress
+</span><span>    }).</span><span style="color:#b39f04;">and_try</span><span>(</span><span style="color:#b39f04;">validate_address</span><span>(email.from).</span><span style="color:#b39f04;">map_err</span><span>(|_| {
+</span><span>        EmailValidationErr::InvalidSenderEmailAddress
+</span><span>    })).</span><span style="color:#b39f04;">and_try</span><span>(
+</span><span>        </span><span style="color:#b39f04;">validate_subject</span><span>(email.subject)
+</span><span>    ).</span><span style="color:#b39f04;">and_try</span><span>(
+</span><span>        </span><span style="color:#b39f04;">validate_body</span><span>(email.body)
+</span><span>    )</span><span style="color:#72ab00;">?</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#a2a001;">Ok</span><span>(ValidatedEmail { to, from, subject, body })
+</span><span>}
+</span></code></pre>
+<p>This approach provides the best of both worlds. We are still returning a <code>Vec&lt;EmailValidationErr&gt;</code> to get the UX benefit of returning all of the errors rather than just the first, and the compiler ensures we check for errors before using the <code>to</code>, <code>from</code>, <code>subject</code> and <code>body</code> fields to bulid the <code>ValidatedEmail</code>. Unlike our second attempt, if I removed the error handling (perhaps by removing the <code>?</code>) this code would no longer compile.</p>
+<h2 id="feedback-wanted">Feedback Wanted</h2>
+<p>This crate is in the experimental phase, and all feedback is appreciated. Feel free to create an <a href="https://github.com/JoshMcguigan/multi_try/issues">issue</a> to express any suggestions, questions, or criticisms.</p>
+<h4 id="community-involvement">Community Involvement</h4>
+<p>I've edited this blog post based on the changes to <code>multi_try</code> from Github user <a href="https://github.com/sunjay">sunjay</a>. Sunjay submitted a very well written <a href="https://github.com/JoshMcguigan/multi_try/pull/1">pull request</a> improving the <code>multi_try</code> API by implementing it as an extension trait on the standard <code>Result</code> type.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

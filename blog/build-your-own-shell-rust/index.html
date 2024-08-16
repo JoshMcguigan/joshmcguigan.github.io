@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Build Your Own Shell using Rust</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Build Your Own Shell using Rust</h1>
+
+<p class="subtitle">2018-11-17</p>
+
+<p>This is a tutorial on building your own shell using Rust, in the spirit of the <a href="https://github.com/danistefanovic/build-your-own-x">build-your-own-x</a> list. Creating a shell is a great way to understand how the shell, terminal emulator, and OS work together.</p>
+<h2 id="what-is-a-shell">What is a shell?</h2>
+<p>A shell is a program which allows you to control your computer. It does this largely by making it easy to launch other applications. But a shell on it's own isn't an interactive application.</p>
+<p>Most users interact with the shell through a terminal emulator. A concise description of a terminal emulator by user <a href="https://askubuntu.com/a/111149">geirha</a> follows:</p>
+<blockquote>
+<p>The terminal emulator (often just called terminal) is "just the window", yes. It runs a text based program, which by default is your login shell (which is bash in Ubuntu). When you type characters in the window, the terminal draws these characters in the window in addition to sending it to the shell's (or other program's) stdin. The characters the shell outputs to stdout and stderr get sent to the terminal, which in turn draws these characters in the window.</p>
+</blockquote>
+<p>In this tutorial, we'll write our own shell and run it inside our normal terminal emulator (wherever you'd typically <code>cargo run</code>).</p>
+<h2 id="a-starting-point">A Starting Point</h2>
+<p>The simplest possible shell requires only a handful of lines of Rust code. Here we create a new string, which is used to hold the user input. The <code>stdin().read_line</code> function blocks until the user presses the enter key, then it writes the entire user input (including the newline from pressing enter) into our string. After stripping the newline character with <code>input.trim()</code> we attempt to run the command.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>(){
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> input </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">String</span><span>::new();
+</span><span>    </span><span style="color:#b39f04;">stdin</span><span>().</span><span style="color:#b39f04;">read_line</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> input).</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#7f8989;">// read_line leaves a trailing newline, which trim removes
+</span><span>    </span><span style="color:#668f14;">let</span><span> command </span><span style="color:#72ab00;">=</span><span> input.</span><span style="color:#b39f04;">trim</span><span>(); 
+</span><span>
+</span><span>    Command::new(command)
+</span><span>        .</span><span style="color:#b39f04;">spawn</span><span>()
+</span><span>        .</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>}
+</span></code></pre>
+<p>After <code>cargo run</code>ing this, you should see a flashing cursor in your terminal which is waiting for input. Try typing <code>ls</code> and pressing <code>enter</code>, and you will see the <code>ls</code> command print the contents of the current directory, and then the shell will exit.</p>
+<p>Note: These examples cannot be run in the <a href="https://play.rust-lang.org/">Rust Playground</a> because the playground does not currently support stdin nor long running processes.</p>
+<h2 id="accept-multiple-commands">Accept Multiple Commands</h2>
+<p>We don't want our shell to exit after the user enters a single command. Supporting multiple commands is mostly a matter of wrapping the code above in a <code>loop</code>, and adding a call to <code>wait</code> on each child process to ensure we don't prompt the user for additional input before the current process finishes. I've also added a couple lines to print the <code>&gt;</code> character in order to make it easier for the user to distinguish their input from the output of the processes they spawn.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>(){
+</span><span>    </span><span style="color:#72ab00;">loop </span><span>{
+</span><span>        </span><span style="color:#7f8989;">// use the `&gt;` character as the prompt
+</span><span>        </span><span style="color:#7f8989;">// need to explicitly flush this to ensure it prints before read_line
+</span><span>        </span><span style="color:#a2a001;">print!</span><span>(</span><span style="color:#d07711;">&quot;&gt; &quot;</span><span>);
+</span><span>        </span><span style="color:#b39f04;">stdout</span><span>().</span><span style="color:#b39f04;">flush</span><span>();
+</span><span>
+</span><span>        </span><span style="color:#668f14;">let mut</span><span> input </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">String</span><span>::new();
+</span><span>        </span><span style="color:#b39f04;">stdin</span><span>().</span><span style="color:#b39f04;">read_line</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> input).</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>
+</span><span>        </span><span style="color:#668f14;">let</span><span> command </span><span style="color:#72ab00;">=</span><span> input.</span><span style="color:#b39f04;">trim</span><span>();
+</span><span>
+</span><span>        </span><span style="color:#668f14;">let mut</span><span> child </span><span style="color:#72ab00;">= </span><span>Command::new(command)
+</span><span>            .</span><span style="color:#b39f04;">spawn</span><span>()
+</span><span>            .</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>
+</span><span>        </span><span style="color:#7f8989;">// don&#39;t accept another command until this one completes
+</span><span>        child.</span><span style="color:#b39f04;">wait</span><span>(); 
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Running this code you'll see that after running a first command, the prompt comes back so you can enter a second command. Try it out with, for example, the <code>ls</code> and <code>pwd</code> commands.</p>
+<h2 id="handling-args">Handling Args</h2>
+<p>If you try running the command <code>ls -a</code> on the shell above, it will crash. Since it is not aware of arguments, it tries to run a command called <code>ls -a</code>, but the proper behavior is running a command called <code>ls</code> with the argument <code>-a</code>.</p>
+<p>This is fixed below by splitting the user input on whitespace characters, and treating anything before the first whitespace as the name of the command (e.g. <code>ls</code>), while anything after the first whitespace is passed to that command as args (e.g. <code>-a</code>).</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>(){
+</span><span>    </span><span style="color:#72ab00;">loop </span><span>{
+</span><span>        </span><span style="color:#a2a001;">print!</span><span>(</span><span style="color:#d07711;">&quot;&gt; &quot;</span><span>);
+</span><span>        </span><span style="color:#b39f04;">stdout</span><span>().</span><span style="color:#b39f04;">flush</span><span>();
+</span><span>
+</span><span>        </span><span style="color:#668f14;">let mut</span><span> input </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">String</span><span>::new();
+</span><span>        </span><span style="color:#b39f04;">stdin</span><span>().</span><span style="color:#b39f04;">read_line</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> input).</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>
+</span><span>        </span><span style="color:#7f8989;">// everything after the first whitespace character 
+</span><span>        </span><span style="color:#7f8989;">//     is interpreted as args to the command
+</span><span>        </span><span style="color:#668f14;">let mut</span><span> parts </span><span style="color:#72ab00;">=</span><span> input.</span><span style="color:#b39f04;">trim</span><span>().</span><span style="color:#b39f04;">split_whitespace</span><span>();
+</span><span>        </span><span style="color:#668f14;">let</span><span> command </span><span style="color:#72ab00;">=</span><span> parts.</span><span style="color:#b39f04;">next</span><span>().</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>        </span><span style="color:#668f14;">let</span><span> args </span><span style="color:#72ab00;">=</span><span> parts;
+</span><span>
+</span><span>        </span><span style="color:#668f14;">let mut</span><span> child </span><span style="color:#72ab00;">= </span><span>Command::new(command)
+</span><span>            .</span><span style="color:#b39f04;">args</span><span>(args)
+</span><span>            .</span><span style="color:#b39f04;">spawn</span><span>()
+</span><span>            .</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>
+</span><span>        child.</span><span style="color:#b39f04;">wait</span><span>();
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<h2 id="shell-built-ins">Shell Built-ins</h2>
+<p>It turns out there are certain commands that the shell cannot simply dispatch to another process. These are things which affect something internal to the shell, and thus must be implemented by the shell itself.</p>
+<p>Probably the most common example of this is the <code>cd</code> command. For an explanation of why <code>cd</code> must be a shell built-in, check out <a href="https://unix.stackexchange.com/a/38809">this link</a>. In addition to the shell built-in, there actually is a program called <code>cd</code>. The reasons for this duality is explained <a href="https://unix.stackexchange.com/a/38819">here</a>.</p>
+<p>Below we add support to our shell for the <code>cd</code> built-in.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>(){
+</span><span>    </span><span style="color:#72ab00;">loop </span><span>{
+</span><span>        </span><span style="color:#a2a001;">print!</span><span>(</span><span style="color:#d07711;">&quot;&gt; &quot;</span><span>);
+</span><span>        </span><span style="color:#b39f04;">stdout</span><span>().</span><span style="color:#b39f04;">flush</span><span>();
+</span><span>
+</span><span>        </span><span style="color:#668f14;">let mut</span><span> input </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">String</span><span>::new();
+</span><span>        </span><span style="color:#b39f04;">stdin</span><span>().</span><span style="color:#b39f04;">read_line</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> input).</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>
+</span><span>        </span><span style="color:#668f14;">let mut</span><span> parts </span><span style="color:#72ab00;">=</span><span> input.</span><span style="color:#b39f04;">trim</span><span>().</span><span style="color:#b39f04;">split_whitespace</span><span>();
+</span><span>        </span><span style="color:#668f14;">let</span><span> command </span><span style="color:#72ab00;">=</span><span> parts.</span><span style="color:#b39f04;">next</span><span>().</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>        </span><span style="color:#668f14;">let</span><span> args </span><span style="color:#72ab00;">=</span><span> parts;
+</span><span>
+</span><span>        </span><span style="color:#72ab00;">match</span><span> command {
+</span><span>            </span><span style="color:#d07711;">&quot;cd&quot; </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>                </span><span style="color:#7f8989;">// default to &#39;/&#39; as new directory if one was not provided
+</span><span>                </span><span style="color:#668f14;">let</span><span> new_dir </span><span style="color:#72ab00;">=</span><span> args.</span><span style="color:#b39f04;">peekable</span><span>().</span><span style="color:#b39f04;">peek</span><span>().</span><span style="color:#b39f04;">map_or</span><span>(</span><span style="color:#d07711;">&quot;/&quot;</span><span>, |</span><span style="color:#5597d6;">x</span><span>| </span><span style="color:#72ab00;">*</span><span>x);
+</span><span>                </span><span style="color:#668f14;">let</span><span> root </span><span style="color:#72ab00;">= </span><span>Path::new(new_dir);
+</span><span>                </span><span style="color:#72ab00;">if </span><span style="color:#668f14;">let </span><span style="color:#a2a001;">Err</span><span>(e) </span><span style="color:#72ab00;">= </span><span>env::set_current_dir(</span><span style="color:#72ab00;">&amp;</span><span>root) {
+</span><span>                    </span><span style="color:#a2a001;">eprintln!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, e);
+</span><span>                }
+</span><span>            },
+</span><span>            command </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>                </span><span style="color:#668f14;">let mut</span><span> child </span><span style="color:#72ab00;">= </span><span>Command::new(command)
+</span><span>                    .</span><span style="color:#b39f04;">args</span><span>(args)
+</span><span>                    .</span><span style="color:#b39f04;">spawn</span><span>()
+</span><span>                    .</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>
+</span><span>                child.</span><span style="color:#b39f04;">wait</span><span>();
+</span><span>            }
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<h2 id="error-handling">Error Handling</h2>
+<p>If you've been following along, you've probably already noticed that the shells above will crash if you input a command which does not exist. In the version below, that is handled gracefully, by printing an error to the user and then allowing them to enter another command.</p>
+<p>Since entering a bad command was acting as an easy way to quit the shell, I've also implemented another shell built-in, the <code>exit</code> command.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>(){
+</span><span>    </span><span style="color:#72ab00;">loop </span><span>{
+</span><span>        </span><span style="color:#a2a001;">print!</span><span>(</span><span style="color:#d07711;">&quot;&gt; &quot;</span><span>);
+</span><span>        </span><span style="color:#b39f04;">stdout</span><span>().</span><span style="color:#b39f04;">flush</span><span>();
+</span><span>
+</span><span>        </span><span style="color:#668f14;">let mut</span><span> input </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">String</span><span>::new();
+</span><span>        </span><span style="color:#b39f04;">stdin</span><span>().</span><span style="color:#b39f04;">read_line</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> input).</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>
+</span><span>        </span><span style="color:#668f14;">let mut</span><span> parts </span><span style="color:#72ab00;">=</span><span> input.</span><span style="color:#b39f04;">trim</span><span>().</span><span style="color:#b39f04;">split_whitespace</span><span>();
+</span><span>        </span><span style="color:#668f14;">let</span><span> command </span><span style="color:#72ab00;">=</span><span> parts.</span><span style="color:#b39f04;">next</span><span>().</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>        </span><span style="color:#668f14;">let</span><span> args </span><span style="color:#72ab00;">=</span><span> parts;
+</span><span>
+</span><span>        </span><span style="color:#72ab00;">match</span><span> command {
+</span><span>            </span><span style="color:#d07711;">&quot;cd&quot; </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>                </span><span style="color:#668f14;">let</span><span> new_dir </span><span style="color:#72ab00;">=</span><span> args.</span><span style="color:#b39f04;">peekable</span><span>().</span><span style="color:#b39f04;">peek</span><span>().</span><span style="color:#b39f04;">map_or</span><span>(</span><span style="color:#d07711;">&quot;/&quot;</span><span>, |</span><span style="color:#5597d6;">x</span><span>| </span><span style="color:#72ab00;">*</span><span>x);
+</span><span>                </span><span style="color:#668f14;">let</span><span> root </span><span style="color:#72ab00;">= </span><span>Path::new(new_dir);
+</span><span>                </span><span style="color:#72ab00;">if </span><span style="color:#668f14;">let </span><span style="color:#a2a001;">Err</span><span>(e) </span><span style="color:#72ab00;">= </span><span>env::set_current_dir(</span><span style="color:#72ab00;">&amp;</span><span>root) {
+</span><span>                    </span><span style="color:#a2a001;">eprintln!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, e);
+</span><span>                }
+</span><span>            },
+</span><span>            </span><span style="color:#d07711;">&quot;exit&quot; </span><span style="color:#72ab00;">=&gt; return</span><span>,
+</span><span>            command </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>                </span><span style="color:#668f14;">let</span><span> child </span><span style="color:#72ab00;">= </span><span>Command::new(command)
+</span><span>                    .</span><span style="color:#b39f04;">args</span><span>(args)
+</span><span>                    .</span><span style="color:#b39f04;">spawn</span><span>();
+</span><span>
+</span><span>                </span><span style="color:#7f8989;">// gracefully handle malformed user input
+</span><span>                </span><span style="color:#72ab00;">match</span><span> child {
+</span><span>                    </span><span style="color:#a2a001;">Ok</span><span>(</span><span style="color:#668f14;">mut</span><span> child) </span><span style="color:#72ab00;">=&gt; </span><span>{ child.</span><span style="color:#b39f04;">wait</span><span>(); },
+</span><span>                    </span><span style="color:#a2a001;">Err</span><span>(e) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">eprintln!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, e),
+</span><span>                };
+</span><span>            }
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<h2 id="pipes">Pipes</h2>
+<p>It would be difficult to be productive in a shell which didn't include pipes. If you aren't familiar with this feature, the <code>|</code> character is used to tell the shell to redirect the output of the first command into the input of the second command. For example, running the command <code>ls | grep Cargo</code> triggers the following set of actions:</p>
+<ol>
+<li><code>ls</code> will list all files in the current directory</li>
+<li>The shell will pipe the above list of files to <code>grep</code></li>
+<li><code>grep</code> will filter the list and output only files which contain the string <code>Cargo</code></li>
+</ol>
+<p>This final iteration of our shell includes very basic support for pipes. For an introduction to many other things pipes and IO redirection can do, check out <a href="https://robots.thoughtbot.com/input-output-redirection-in-the-shell">this article</a>.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>(){
+</span><span>    </span><span style="color:#72ab00;">loop </span><span>{
+</span><span>        </span><span style="color:#a2a001;">print!</span><span>(</span><span style="color:#d07711;">&quot;&gt; &quot;</span><span>);
+</span><span>        </span><span style="color:#b39f04;">stdout</span><span>().</span><span style="color:#b39f04;">flush</span><span>();
+</span><span>
+</span><span>        </span><span style="color:#668f14;">let mut</span><span> input </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">String</span><span>::new();
+</span><span>        </span><span style="color:#b39f04;">stdin</span><span>().</span><span style="color:#b39f04;">read_line</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#668f14;">mut</span><span> input).</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>
+</span><span>        </span><span style="color:#7f8989;">// must be peekable so we know when we are on the last command
+</span><span>        </span><span style="color:#668f14;">let mut</span><span> commands </span><span style="color:#72ab00;">=</span><span> input.</span><span style="color:#b39f04;">trim</span><span>().</span><span style="color:#b39f04;">split</span><span>(</span><span style="color:#d07711;">&quot; | &quot;</span><span>).</span><span style="color:#b39f04;">peekable</span><span>();
+</span><span>        </span><span style="color:#668f14;">let mut</span><span> previous_command </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">None</span><span>;
+</span><span>
+</span><span>        </span><span style="color:#72ab00;">while </span><span style="color:#668f14;">let </span><span style="color:#a2a001;">Some</span><span>(command) </span><span style="color:#72ab00;">=</span><span> commands.</span><span style="color:#b39f04;">next</span><span>()  {
+</span><span>
+</span><span>            </span><span style="color:#668f14;">let mut</span><span> parts </span><span style="color:#72ab00;">=</span><span> command.</span><span style="color:#b39f04;">trim</span><span>().</span><span style="color:#b39f04;">split_whitespace</span><span>();
+</span><span>            </span><span style="color:#668f14;">let</span><span> command </span><span style="color:#72ab00;">=</span><span> parts.</span><span style="color:#b39f04;">next</span><span>().</span><span style="color:#b39f04;">unwrap</span><span>();
+</span><span>            </span><span style="color:#668f14;">let</span><span> args </span><span style="color:#72ab00;">=</span><span> parts;
+</span><span>
+</span><span>            </span><span style="color:#72ab00;">match</span><span> command {
+</span><span>                </span><span style="color:#d07711;">&quot;cd&quot; </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>                    </span><span style="color:#668f14;">let</span><span> new_dir </span><span style="color:#72ab00;">=</span><span> args.</span><span style="color:#b39f04;">peekable</span><span>().</span><span style="color:#b39f04;">peek</span><span>()
+</span><span>                        .</span><span style="color:#b39f04;">map_or</span><span>(</span><span style="color:#d07711;">&quot;/&quot;</span><span>, |</span><span style="color:#5597d6;">x</span><span>| </span><span style="color:#72ab00;">*</span><span>x);
+</span><span>                    </span><span style="color:#668f14;">let</span><span> root </span><span style="color:#72ab00;">= </span><span>Path::new(new_dir);
+</span><span>                    </span><span style="color:#72ab00;">if </span><span style="color:#668f14;">let </span><span style="color:#a2a001;">Err</span><span>(e) </span><span style="color:#72ab00;">= </span><span>env::set_current_dir(</span><span style="color:#72ab00;">&amp;</span><span>root) {
+</span><span>                        </span><span style="color:#a2a001;">eprintln!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, e);
+</span><span>                    }
+</span><span>
+</span><span>                    previous_command </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">None</span><span>;
+</span><span>                },
+</span><span>                </span><span style="color:#d07711;">&quot;exit&quot; </span><span style="color:#72ab00;">=&gt; return</span><span>,
+</span><span>                command </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>                    </span><span style="color:#668f14;">let</span><span> stdin </span><span style="color:#72ab00;">=</span><span> previous_command
+</span><span>                        .</span><span style="color:#b39f04;">map_or</span><span>(
+</span><span>                            Stdio::inherit(),
+</span><span>                            |</span><span style="color:#5597d6;">output</span><span>: Child| Stdio::from(output.stdout.</span><span style="color:#b39f04;">unwrap</span><span>())
+</span><span>                        );
+</span><span>
+</span><span>                    </span><span style="color:#668f14;">let</span><span> stdout </span><span style="color:#72ab00;">= if</span><span> commands.</span><span style="color:#b39f04;">peek</span><span>().</span><span style="color:#b39f04;">is_some</span><span>() {
+</span><span>                        </span><span style="color:#7f8989;">// there is another command piped behind this one
+</span><span>                        </span><span style="color:#7f8989;">// prepare to send output to the next command
+</span><span>                        Stdio::piped()
+</span><span>                    } </span><span style="color:#72ab00;">else </span><span>{
+</span><span>                        </span><span style="color:#7f8989;">// there are no more commands piped behind this one
+</span><span>                        </span><span style="color:#7f8989;">// send output to shell stdout
+</span><span>                        Stdio::inherit()
+</span><span>                    };
+</span><span>
+</span><span>                    </span><span style="color:#668f14;">let</span><span> output </span><span style="color:#72ab00;">= </span><span>Command::new(command)
+</span><span>                        .</span><span style="color:#b39f04;">args</span><span>(args)
+</span><span>                        .</span><span style="color:#b39f04;">stdin</span><span>(stdin)
+</span><span>                        .</span><span style="color:#b39f04;">stdout</span><span>(stdout)
+</span><span>                        .</span><span style="color:#b39f04;">spawn</span><span>();
+</span><span>
+</span><span>                    </span><span style="color:#72ab00;">match</span><span> output {
+</span><span>                        </span><span style="color:#a2a001;">Ok</span><span>(output) </span><span style="color:#72ab00;">=&gt; </span><span>{ previous_command </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">Some</span><span>(output); },
+</span><span>                        </span><span style="color:#a2a001;">Err</span><span>(e) </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>                            previous_command </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">None</span><span>;
+</span><span>                            </span><span style="color:#a2a001;">eprintln!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, e);
+</span><span>                        },
+</span><span>                    };
+</span><span>                }
+</span><span>            }
+</span><span>        }
+</span><span>
+</span><span>        </span><span style="color:#72ab00;">if </span><span style="color:#668f14;">let </span><span style="color:#a2a001;">Some</span><span>(</span><span style="color:#668f14;">mut</span><span> final_command) </span><span style="color:#72ab00;">=</span><span> previous_command {
+</span><span>            </span><span style="color:#7f8989;">// block until the final command has finished
+</span><span>            final_command.</span><span style="color:#b39f04;">wait</span><span>();
+</span><span>        }
+</span><span>
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<h2 id="conclusion">Conclusion</h2>
+<p>In less than 100 lines of Rust we've created a shell which would be usable for many day to day tasks, but a real shell has many more features. The GNU website has an online manual for the bash shell, including this list of <a href="https://www.gnu.org/software/bash/manual/html_node/Basic-Shell-Features.html#Basic-Shell-Features">shell features</a> which is a great place to start looking into the more advanced functionality.</p>
+<p>Please note that this was a learning project for me, and in cases where there was a trade-off between simplicity and robustness I most often chose simplicity.</p>
+<p>This shell is <a href="https://github.com/JoshMcguigan/bubble-shell">available on GitHub</a>. The latest commit as of this writing is <a href="https://github.com/JoshMcguigan/bubble-shell/tree/a6b81d837e4f5e68cf0b72a4d55e95fb08a47640">a47640</a>. Another Rust shell learning project that you may be interested in is <a href="https://github.com/psinghal20/rush">Rush</a>.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

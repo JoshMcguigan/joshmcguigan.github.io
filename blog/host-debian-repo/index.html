@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Maintaining your own Debian package repository</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Maintaining your own Debian package repository</h1>
+
+<p class="subtitle">2024-08-15</p>
+
+<p>After a few years of using rolling release Linux distributions I migrated to Debian for some stability. But despite the warnings about <a href="https://wiki.debian.org/DontBreakDebian">breaking debian</a> there were times when I really needed software that was newer than the Debian stable repositories offered.</p>
+<p>There are lots of ways to accomplish this, but I wanted to see what it was like staying within the <code>apt</code> package management world (as opposed to installing another package manager like <code>nix</code>). More broadly I wondered what it might look like to layer a repository of very up to date end user software on top of a stable debian base, all using <code>apt</code>.</p>
+<p>Warning: This idea is barely half baked. I am going to be stepping away from it for a while so I wanted to write some of it down while I still remember. You can see the current state of my work on this in the <a href="https://github.com/JoshMcguigan/community-repos">git repo here</a>.</p>
+<h2 id="building-deb">Building *.deb</h2>
+<p>I won't go into much depth about how to actually create the packages. There are lots of ways to do it depending on how closely you want to follow the upstream <a href="https://wiki.debian.org/Packaging">debian packaging guidelines</a>. For myself, the goal was to build packages which wouldn't break the system; I wasn't trying to uphold any additional promises. To keep things simple this basically meant I wouldn't install any dynamic libraries, since these could conflict with other packages. By sticking to mostly statically linked executables, or executables which link only to upstream debian libraries, I should be able to avoid breaking any debian system.</p>
+<p>For rust programs, I found <a href="https://crates.io/crates/cargo-deb">cargo deb</a> to be helpful.</p>
+<h2 id="creating-the-debian-repository">Creating the debian repository</h2>
+<p>Debian repositories are setup to be hosted by a static file server, so long as the directory structure is organized in just the right way. Fortunately there is a tool called <a href="https://wiki.debian.org/DebianRepository/SetupWithReprepro">reprepro</a> which makes generating and maintaining (while you add or remove packages) this directory structure easy.</p>
+<pre data-lang="sh" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="color:#5597d6;">$</span><span> mkdir debpkgs
+</span><span>
+</span><span style="color:#5597d6;">$</span><span> reprepro</span><span style="color:#5597d6;"> -S</span><span> unknown</span><span style="color:#5597d6;"> -b</span><span> debpkgs includedeb bookworm path/to.deb
+</span></code></pre>
+<p>You do need <a href="https://github.com/JoshMcguigan/community-repos/tree/main/conf">some config</a> in the <code>debpkgs</code> directory for this to work, but otherwise it is really easy.</p>
+<h2 id="hosting-the-debian-repository">Hosting the debian repository</h2>
+<p>I chose to host the repository on an object store (specifically I chose cloudflare r2). This keeps the hosting really simple (no underlying OS to maintain), and it also allows easy updating by mounting the object store onto a build machine when I want to add packages.</p>
+<h2 id="building-packages-in-ci">Building packages in CI</h2>
+<p>A potential concern with a binary package repo is that malware could be injected into the packages (either by the owner of the repo, or an attacker). To mitigate this, I wanted to build all the packages in CI, so a consumer of these packages could fully audit the environment they run in.</p>
+<p>Making this all <a href="https://github.com/JoshMcguigan/community-repos/blob/main/.github/workflows/deploy.yml">work in github CI</a> was probably the most time consuming part of this project.</p>
+<ul>
+<li>Environment secrets are used so the CI job has access to cloudflare r2 credentials and a gpg key</li>
+<li>The r2 object store is mounted onto the file system via rclone/fuse</li>
+<li>Any packages which are configured but which do not exist in the object store are built (build the binary, package it into a deb, and use reprepro to update the files on the object store)
+<ul>
+<li>This step is done (very poorly) by a tool I prototyped <a href="https://github.com/JoshMcguigan/community-repos/blob/main/pkgr/src/main.rs">pkgr</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="consuming-packages-from-this-repo">Consuming packages from this repo</h2>
+<p>The github repository publishes a public key which can be used to verify the source of the packages, and has <a href="https://github.com/JoshMcguigan/community-repos/tree/main?tab=readme-ov-file#setup-debian-bookworm-to-use-these-packages">instructions</a> which explain how you can setup your debian machine to use this package repo.</p>
+<p>For now only a single package is published, and it'll likely stay that way for a while. But I didn't find any other resources that describe how to host and maintain a debian package repository utilizing CI tooling, so I wanted to share what I came up with. I'm sure there are many things I'm doing sub-optimally here, and I'd be thrilled to receive feedback in that regard.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Custom Exit Status Codes with ? in main</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">Custom Exit Status Codes with ? in main</h1>
+
+<p class="subtitle">2019-02-09</p>
+
+<p>Rust 1.26 introduced the ability to return a <code>Result</code> from the <code>main</code> method, which was a great ergonomics improvement especially for small CLI applications. If your application returns an <code>Ok</code>, Rust reports a success exit status code to the operating system. Likewise if your application returns an <code>Err</code>, Rust reports an error exit status code.</p>
+<p>But what if you want to return a custom exit status error code for each possible error type in your application, to provide some additional feedback to your user? This leads into an exploration of the <code>Termination</code> and <code>Try</code> traits, and is the topic of this post.</p>
+<h2 id="custom-exit-codes-with-std-process-exit">Custom exit codes with std::process:exit</h2>
+<p>The Rust standard library includes <code>std::process::exit</code> which allows exiting the process with a custom error code. A simple example is listed below. In a larger program this type of match pattern would get repeated many times, and this is exactly why the <code>?</code> operator was introduced.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>std::fs::File;
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() {
+</span><span>    </span><span style="color:#668f14;">let</span><span> file : File </span><span style="color:#72ab00;">= match </span><span>File::open(</span><span style="color:#d07711;">&quot;filename&quot;</span><span>) {
+</span><span>        </span><span style="color:#a2a001;">Ok</span><span>(file) </span><span style="color:#72ab00;">=&gt;</span><span> file,
+</span><span>        </span><span style="color:#a2a001;">Err</span><span>(e) </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>            </span><span style="color:#a2a001;">eprintln!</span><span>(</span><span style="color:#d07711;">&quot;Error: </span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">&quot;</span><span>, e);
+</span><span>            std::process::exit(</span><span style="color:#b3933a;">9</span><span>);
+</span><span>        }
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#7f8989;">// do something with file
+</span><span>}
+</span></code></pre>
+<h2 id="introducing-try">Introducing try (?)</h2>
+<p>To eliminate the boilerplate associated with the approach above, the <code>?</code> operator was introduced, and as of Rust 1.26 it is possible to use the <code>?</code> operator in <code>main</code>.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>std::fs::File;
+</span><span style="color:#72ab00;">use </span><span>std::io;
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;(), io::Error&gt; {
+</span><span>    </span><span style="color:#668f14;">let</span><span> file : File </span><span style="color:#72ab00;">= </span><span>File::open(</span><span style="color:#d07711;">&quot;filename&quot;</span><span>)</span><span style="color:#72ab00;">?</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#7f8989;">// do something with file
+</span><span>
+</span><span>    </span><span style="color:#a2a001;">Ok</span><span>(())
+</span><span>}
+</span></code></pre>
+<p>This greatly simplifies error handling, but it comes at the cost of specifying a custom exit status code. Using this pattern, Rust will return the same exit status to the OS no matter what type of error occurred.</p>
+<h2 id="termination-trait">Termination trait</h2>
+<p>It actually isn't just <code>Result</code> that can be returned from <code>main</code>, but anything which implements the <code>std::process::Termination</code> trait. The <code>Termination</code> trait includes a single method: <code>fn report(self) -&gt; i32</code>, which Rust uses to determine which exit status code to return to the OS.</p>
+<p>The standard library includes <code>impl&lt;E: Debug&gt; Termination for Result&lt;(), E&gt;</code> which is why we could return a <code>Result&lt;(), io::Error&gt;</code> from <code>main</code> in the example above. But since the only trait bound on the error type is <code>Debug</code> there is no way for Rust to know which particular exit status code you might want for a particular error. For this reason, no matter the error type Rust will return the same exit code.</p>
+<h2 id="implementing-termination">Implementing Termination</h2>
+<p>It would be nice to have an additional <code>Termination</code> impl like <code>impl&lt;E: Into&lt;i32&gt; + Debug&gt; Termination for Result&lt;(), E&gt;</code>, which includes a trait bound on the error type to ensure we could convert each error into a custom exit status. However, due to the Rust orphan rules, it is not possible to add that implementation outside of the standard library, and due to the rules on overlapping trait implementations it couldn't even be added within the standard library.</p>
+<p>To get around these issues, we have to create our own type to implement <code>Termination</code>, as shown below.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">pub enum </span><span style="color:#c23f31;">Exit</span><span>&lt;T&gt; {
+</span><span>    </span><span style="color:#a2a001;">Ok</span><span>,
+</span><span>    </span><span style="color:#a2a001;">Err</span><span>(T)
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">impl</span><span>&lt;T: </span><span style="color:#a2a001;">Into</span><span>&lt;</span><span style="color:#668f14;">i32</span><span>&gt; </span><span style="color:#72ab00;">+</span><span> Debug&gt; Termination </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">Exit</span><span>&lt;T&gt; {
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">report</span><span>(</span><span style="color:#5597d6;">self</span><span>) -&gt; </span><span style="color:#668f14;">i32 </span><span>{
+</span><span>        </span><span style="color:#72ab00;">match </span><span style="color:#5597d6;">self </span><span>{
+</span><span>            Exit::Ok </span><span style="color:#72ab00;">=&gt; </span><span style="color:#b3933a;">0</span><span>,
+</span><span>            Exit::Err(err) </span><span style="color:#72ab00;">=&gt; </span><span>{
+</span><span>                </span><span style="color:#a2a001;">eprintln!</span><span>(</span><span style="color:#d07711;">&quot;Error: </span><span style="color:#aeb52b;">{:?}</span><span style="color:#d07711;">&quot;</span><span>, err);
+</span><span>                err.</span><span style="color:#b39f04;">into</span><span>()
+</span><span>            },
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>The additional <code>Into&lt;i32&gt;</code> trait bound on the error type allows us to call <code>err.into()</code> in the report method to pass back a custom exit status code.</p>
+<h2 id="a-simple-example">A simple example</h2>
+<p>We can use the above implementation of <code>Exit</code> to return our own custom exit status codes as shown below.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#5597d6;">derive</span><span>(Debug)]
+</span><span style="color:#668f14;">enum </span><span style="color:#c23f31;">MyErr </span><span>{
+</span><span>    OneLessThanZero,
+</span><span>    OneEqualsTwo,
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">impl </span><span style="color:#a2a001;">From</span><span>&lt;MyErr&gt; </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">i32 </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">from</span><span>(</span><span style="color:#5597d6;">err</span><span>: MyErr) -&gt; </span><span style="color:#668f14;">Self </span><span>{
+</span><span>        </span><span style="color:#72ab00;">match</span><span> err {
+</span><span>            MyErr::OneLessThanZero </span><span style="color:#72ab00;">=&gt; </span><span style="color:#b3933a;">2</span><span>,
+</span><span>            MyErr::OneEqualsTwo </span><span style="color:#72ab00;">=&gt; </span><span style="color:#b3933a;">3</span><span>,
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() -&gt; Exit&lt;MyErr&gt; {
+</span><span>    </span><span style="color:#72ab00;">if </span><span style="color:#b3933a;">1 </span><span style="color:#72ab00;">&lt; </span><span style="color:#b3933a;">0 </span><span>{
+</span><span>        </span><span style="color:#72ab00;">return </span><span>Exit::Err(MyErr::OneLessThanZero)
+</span><span>    } </span><span style="color:#72ab00;">else if </span><span style="color:#b3933a;">1 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">2 </span><span>{
+</span><span>        </span><span style="color:#72ab00;">return </span><span>Exit::Err(MyErr::OneEqualsTwo)
+</span><span>    }
+</span><span>
+</span><span>    Exit::Ok
+</span><span>}
+</span></code></pre>
+<h2 id="try-with-exit">Try (?) with Exit</h2>
+<p>The example above is quite contrived and really not any better than directly calling <code>std::process::exit</code>. The real benefit comes when using <code>?</code> with our new <code>Exit</code> type. In order to use the <code>?</code> operator in a function (including <code>main</code>) which returns <code>Exit</code>, we must implement the <code>Try</code> trait for <code>Exit</code>.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#668f14;">impl</span><span>&lt;T&gt; Try </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">Exit</span><span>&lt;T&gt; {
+</span><span>    </span><span style="color:#668f14;">type </span><span style="color:#c23f31;">Ok </span><span style="color:#72ab00;">= </span><span>();
+</span><span>    </span><span style="color:#668f14;">type </span><span style="color:#c23f31;">Error </span><span style="color:#72ab00;">=</span><span> T;
+</span><span>
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">into_result</span><span>(</span><span style="color:#5597d6;">self</span><span>) -&gt; </span><span style="color:#a2a001;">Result</span><span>&lt;</span><span style="color:#668f14;">Self::</span><span style="color:#a2a001;">Ok</span><span>, </span><span style="color:#668f14;">Self::</span><span>Error&gt; {
+</span><span>        </span><span style="color:#72ab00;">match </span><span style="color:#5597d6;">self </span><span>{
+</span><span>            Exit::Ok </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">Ok</span><span>(()),
+</span><span>            Exit::Err(err) </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">Err</span><span>(err)
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">from_error</span><span>(</span><span style="color:#5597d6;">err</span><span>: </span><span style="color:#668f14;">Self::</span><span>Error) -&gt; </span><span style="color:#668f14;">Self </span><span>{
+</span><span>        Exit::Err(err)
+</span><span>    }
+</span><span>
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">from_ok</span><span>(</span><span style="color:#72ab00;">_</span><span>: </span><span style="color:#668f14;">Self::</span><span>Ok) -&gt; </span><span style="color:#668f14;">Self </span><span>{
+</span><span>        Exit::Ok
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Now that <code>Exit</code> implements <code>Try</code>, we can demonstrate a slightly more realistic example, including using the <code>?</code> operator. Notice here that we also have the flexibility to specify a specific exit status code for each error type in the <code>impl From&lt;MyErr&gt; for i32</code> block.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#5597d6;">derive</span><span>(Debug)]
+</span><span style="color:#668f14;">enum </span><span style="color:#c23f31;">MyErr </span><span>{
+</span><span>    MissingArg,
+</span><span>    ParseIntError,
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">impl </span><span style="color:#a2a001;">From</span><span>&lt;MyErr&gt; </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">i32 </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">from</span><span>(</span><span style="color:#5597d6;">err</span><span>: MyErr) -&gt; </span><span style="color:#668f14;">Self </span><span>{
+</span><span>        </span><span style="color:#72ab00;">match</span><span> err {
+</span><span>            MyErr::MissingArg </span><span style="color:#72ab00;">=&gt; </span><span style="color:#b3933a;">2</span><span>,
+</span><span>            MyErr::ParseIntError </span><span style="color:#72ab00;">=&gt; </span><span style="color:#b3933a;">3</span><span>,
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">impl </span><span style="color:#a2a001;">From</span><span>&lt;option::NoneError&gt; </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">MyErr </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">from</span><span>(</span><span style="color:#72ab00;">_</span><span>: option::NoneError) -&gt; </span><span style="color:#668f14;">Self </span><span>{
+</span><span>        MyErr::MissingArg
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">impl </span><span style="color:#a2a001;">From</span><span>&lt;num::ParseIntError&gt; </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">MyErr </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">from</span><span>(</span><span style="color:#72ab00;">_</span><span>: num::ParseIntError) -&gt; </span><span style="color:#668f14;">Self </span><span>{
+</span><span>        MyErr::ParseIntError
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() -&gt; Exit&lt;MyErr&gt; {
+</span><span>    </span><span style="color:#668f14;">let</span><span> num_string</span><span style="color:#72ab00;">= </span><span>env::args().</span><span style="color:#b39f04;">skip</span><span>(</span><span style="color:#b3933a;">1</span><span>).</span><span style="color:#b39f04;">next</span><span>()</span><span style="color:#72ab00;">?</span><span>;
+</span><span>    </span><span style="color:#668f14;">let</span><span> num : </span><span style="color:#668f14;">u32 </span><span style="color:#72ab00;">=</span><span> num_string.</span><span style="color:#b39f04;">parse</span><span>()</span><span style="color:#72ab00;">?</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;Hello, user #</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">!&quot;</span><span>, num);
+</span><span>
+</span><span>    Exit::Ok
+</span><span>}
+</span></code></pre>
+<h2 id="mapping-the-error-for-additional-flexibility">Mapping the error for additional flexibility</h2>
+<p>A downside to the approach above is that <code>option::NoneError</code> and <code>num::ParseIntError</code> must map one-to-one with a variant of <code>MyErr</code>. This means that if I have two operations that return <code>num::ParseIntError</code> I can't have a specific <code>MyErr</code> variant for each of them. This can be resolved using <code>map_err</code> as shown below.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span>#[</span><span style="color:#5597d6;">derive</span><span>(Debug)]
+</span><span style="color:#668f14;">enum </span><span style="color:#c23f31;">MyErr </span><span>{
+</span><span>    MissingArg,
+</span><span>    ParseErrorUserNum,
+</span><span>    ParseErrorGroupNum,
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">impl </span><span style="color:#a2a001;">From</span><span>&lt;MyErr&gt; </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">i32 </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">from</span><span>(</span><span style="color:#5597d6;">err</span><span>: MyErr) -&gt; </span><span style="color:#668f14;">Self </span><span>{
+</span><span>        </span><span style="color:#72ab00;">match</span><span> err {
+</span><span>            MyErr::MissingArg </span><span style="color:#72ab00;">=&gt; </span><span style="color:#b3933a;">2</span><span>,
+</span><span>            MyErr::ParseErrorUserNum </span><span style="color:#72ab00;">=&gt; </span><span style="color:#b3933a;">3</span><span>,
+</span><span>            MyErr::ParseErrorGroupNum </span><span style="color:#72ab00;">=&gt; </span><span style="color:#b3933a;">4</span><span>,
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">impl </span><span style="color:#a2a001;">From</span><span>&lt;option::NoneError&gt; </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">MyErr </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">from</span><span>(</span><span style="color:#72ab00;">_</span><span>: option::NoneError) -&gt; </span><span style="color:#668f14;">Self </span><span>{
+</span><span>        MyErr::MissingArg
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() -&gt; Exit&lt;MyErr&gt; {
+</span><span>    </span><span style="color:#668f14;">let</span><span> user_num_string : </span><span style="color:#a2a001;">String </span><span style="color:#72ab00;">= </span><span>env::args().</span><span style="color:#b39f04;">skip</span><span>(</span><span style="color:#b3933a;">1</span><span>).</span><span style="color:#b39f04;">next</span><span>()</span><span style="color:#72ab00;">?</span><span>;
+</span><span>    </span><span style="color:#668f14;">let</span><span> group_num_string : </span><span style="color:#a2a001;">String </span><span style="color:#72ab00;">= </span><span>env::args().</span><span style="color:#b39f04;">skip</span><span>(</span><span style="color:#b3933a;">2</span><span>).</span><span style="color:#b39f04;">next</span><span>()</span><span style="color:#72ab00;">?</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#668f14;">let</span><span> user_num : </span><span style="color:#668f14;">u32 </span><span style="color:#72ab00;">=</span><span> user_num_string.</span><span style="color:#b39f04;">parse</span><span>()
+</span><span>        .</span><span style="color:#b39f04;">map_err</span><span>(|_| MyErr::ParseErrorUserNum)</span><span style="color:#72ab00;">?</span><span>;
+</span><span>    </span><span style="color:#668f14;">let</span><span> group_num : </span><span style="color:#668f14;">u32 </span><span style="color:#72ab00;">=</span><span> group_num_string.</span><span style="color:#b39f04;">parse</span><span>()
+</span><span>        .</span><span style="color:#b39f04;">map_err</span><span>(|_| MyErr::ParseErrorGroupNum)</span><span style="color:#72ab00;">?</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;Hello, user #</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> from group #</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;">!&quot;</span><span>, user_num, group_num);
+</span><span>
+</span><span>    Exit::Ok
+</span><span>}
+</span></code></pre>
+<p>Note that each call to <code>parse</code> gets its own custom error type, and thus its own exit status code.</p>
+<h2 id="introducing-exit">Introducing Exit</h2>
+<p>I have created a crate, <a href="https://github.com/JoshMcguigan/exit">exit</a>, which implements the <code>Exit</code> struct as demonstrated in this post. The crate is in its very early stages, and is really just intended as a proof of concept and sample implementation for the ideas discussed here, but I'd be interested in hearing your ideas (via the <a href="https://github.com/JoshMcguigan/exit/issues">issue tracker</a>) about how this crate could be made more useful.</p>
+<h4 id="nightly-required">Nightly Required</h4>
+<p>For now, the <code>Exit</code> crate requires nightly Rust, for the following features: <code>try_trait</code>, <code>termination_trait_lib</code>.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>As of Rust 1.26, it is possible to use the <code>?</code> operation within <code>main</code>. Like many other features of Rust, this was accomplished through the trait system, specifically the <code>Try</code> and <code>Termination</code> traits. In the standard implementation, errors returned from <code>main</code> all return the same exit status code to the OS. The <a href="https://github.com/JoshMcguigan/exit">Exit crate</a> demonstrates an implementation of the <code>Try</code> and <code>Termination</code> traits allowing custom exit status codes for each error type.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>

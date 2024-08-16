@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>The Cost of Indirection</title>
+    <link rel="shortcut icon" href="/images/favicon.ico">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            font: 100%/1.5 sans-serif;
+            word-wrap: break-word;
+            margin: 0 auto;
+            padding: 1.5em;
+        }
+
+        @media (min-width: 768px) {
+            html {
+                font-size: 125%;
+                max-width: 42em;
+            }
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            margin: 2.5rem 0 1.5rem 0;
+            line-height: 1.25;
+            color: #355f55;
+        }
+
+        a {
+            color: #25c59d;
+            text-decoration: none;
+        }
+
+        a:hover,
+        a:focus,
+        a:active {
+            text-decoration: underline;
+        }
+
+        p {
+            margin: 1em 0;
+            line-height: 1.5;
+        }
+
+        pre:has(code) {
+            overflow-x: auto;
+            padding: 0.5em;
+            border: dashed 1px #25c59d;
+        }
+
+        ol,
+        ul {
+            margin: 1em;
+        }
+
+        ol li ol,
+        ol li ul,
+        ul li ol,
+        ul li ul {
+            margin: 0 2em;
+        }
+
+        ol li p,
+        ul li p {
+            margin: 0;
+        }
+
+        dl {
+            font-family: monospace, monospace;
+        }
+
+        dl dt {
+            font-weight: bold;
+        }
+
+        dl dd {
+            margin: -1em 0 1em 1em;
+        }
+
+        img {
+            max-width: 100%;
+            display: block;
+            margin: 0 auto;
+            padding: 0.5em;
+        }
+
+        blockquote {
+            padding-left: 1em;
+            font-style: italic;
+            border-left: solid 1px #25c59d;
+        }
+
+        table {
+            font-size: 1rem;
+            text-align: left;
+            caption-side: bottom;
+            margin-bottom: 2em;
+        }
+
+        table * {
+            border: none;
+        }
+
+        table thead,
+        table tr {
+            display: table;
+            table-layout: fixed;
+            width: 100%;
+        }
+
+        table tr:nth-child(even) {
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        table tbody {
+            display: block;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        table td,
+        table th {
+            padding: 0.25em;
+        }
+
+        table,
+        .highlight>pre,
+        pre.example {
+            max-height: 70vh;
+            margin: 1em 0;
+            padding: 1em;
+            overflow: auto;
+            font-size: 0.85rem;
+            font-family: monospace, monospace;
+            border: 1px dashed #25c59d;
+        }
+
+        .title {
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            font-weight: normal;
+            font-size: 0.75em;
+            color: #578a7e;
+        }
+
+        figure {
+            margin: 1em 0;
+        }
+
+        figure figcaption {
+            font-family: monospace, monospace;
+            font-size: 0.75em;
+            text-align: center;
+            color: grey;
+        }
+
+        .footnote-definition sup {
+            margin-left: -1.5em;
+            float: left;
+        }
+
+        .footnote-definition p {
+            padding: 0 1em;
+            border: 1px dashed #25c59d;
+            background-color: rgba(200, 200, 200, 0.2);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        header a+a {
+            margin-left: 1rem;
+        }
+
+        .posts {
+            margin: 0;
+            list-style: none;
+        }
+
+        .posts .post {
+            display: flex;
+            padding: 0.5em 0;
+        }
+
+        .posts .post a {
+            color: #355f55;
+        }
+
+        .posts .post a:hover,
+        .posts .post a:focus,
+        .posts .post a:active {
+            text-decoration: underline;
+        }
+
+        .posts .post date {
+            min-width: 10em;
+            font-family: monospace, monospace;
+            font-size: 0.8rem;
+            vertical-align: text-bottom;
+            padding-right: 2rem;
+            color: #578a7e;
+        }
+    </style>
+</head>
+
+<body>
+    <header class='header'>
+        <a class="logo" href="/">home</a>
+        <nav>
+            <a href="https://www.github.com/joshmcguigan">github</a>
+            <a href="https://www.linkedin.com/in/joshua-mcguigan/">linkedin</a>
+        </nav>
+    </header>
+    <section class="section">
+        <div class="container">
+            
+<h1 class="title">The Cost of Indirection</h1>
+
+<p class="subtitle">2020-02-29</p>
+
+<p>Providing zero cost abstractions is a goal of the Rust programming language. In this post we'll explore the perforamance costs of various methods of indirection.</p>
+<h2 id="the-benchmark">The benchmark</h2>
+<p>I wanted a benchmark which emphasized the cost of indirection, so I needed to minimize the amount of work done in any single call of a function. I settled on solving the nth odd number problem (a play on the nth prime problem), using a shockingly inefficient algorithm.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>std::time::Instant;
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() {
+</span><span>    </span><span style="color:#668f14;">let</span><span> start_time </span><span style="color:#72ab00;">= </span><span>Instant::now();
+</span><span>    </span><span style="color:#668f14;">let</span><span> result </span><span style="color:#72ab00;">= </span><span style="color:#b39f04;">find_nth_odd</span><span>(</span><span style="color:#b3933a;">1_000_000_000</span><span>);
+</span><span>    </span><span style="color:#668f14;">let</span><span> elapsed_time </span><span style="color:#72ab00;">=</span><span> start_time.</span><span style="color:#b39f04;">elapsed</span><span>().</span><span style="color:#b39f04;">as_millis</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> in </span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> ms&quot;</span><span>, result, elapsed_time);
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">find_nth_odd</span><span>(</span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">u64 </span><span>{
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> i </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> odd_count </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#72ab00;">while</span><span> odd_count </span><span style="color:#72ab00;">!=</span><span> n {
+</span><span>        i </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        </span><span style="color:#72ab00;">if </span><span style="color:#b39f04;">is_odd</span><span>(i) {
+</span><span>            odd_count </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>    i
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool </span><span>{
+</span><span>    n </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">2 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">1
+</span><span>}
+</span></code></pre>
+<p>This finds the billionth odd number in 1042 ms. All performance numbers reported in this post are the average of 5 runs, using the 1.41 stable compiler running in release mode (i.e. <code>cargo run --release --bin $MY_BIN</code>).</p>
+<h2 id="struct-impl">Struct impl</h2>
+<p>The simplest indirection is moving the <code>is_odd</code> function into a struct impl block.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>std::time::Instant;
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() {
+</span><span>    </span><span style="color:#668f14;">let</span><span> finder </span><span style="color:#72ab00;">=</span><span> OddFinder;
+</span><span>
+</span><span>    </span><span style="color:#668f14;">let</span><span> start_time </span><span style="color:#72ab00;">= </span><span>Instant::now();
+</span><span>    </span><span style="color:#668f14;">let</span><span> result </span><span style="color:#72ab00;">= </span><span style="color:#b39f04;">find_nth_odd</span><span>(finder, </span><span style="color:#b3933a;">1_000_000_000</span><span>);
+</span><span>    </span><span style="color:#668f14;">let</span><span> elapsed_time </span><span style="color:#72ab00;">=</span><span> start_time.</span><span style="color:#b39f04;">elapsed</span><span>().</span><span style="color:#b39f04;">as_millis</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> in </span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> ms&quot;</span><span>, result, elapsed_time);
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">find_nth_odd</span><span>(</span><span style="color:#5597d6;">odd_finder</span><span>: OddFinder, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">u64 </span><span>{
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> i </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> odd_count </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#72ab00;">while</span><span> odd_count </span><span style="color:#72ab00;">!=</span><span> n {
+</span><span>        i </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        </span><span style="color:#72ab00;">if</span><span> odd_finder.</span><span style="color:#b39f04;">is_odd</span><span>(i) {
+</span><span>            odd_count </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>    i
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">OddFinder</span><span>;
+</span><span>
+</span><span style="color:#668f14;">impl </span><span style="color:#c23f31;">OddFinder </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool </span><span>{
+</span><span>        n </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">2 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">1
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>This is a great demonstration of Rust's zero costs abstractions, finding the billionth odd number in 1032 ms.</p>
+<h2 id="trait">Trait</h2>
+<p>What happens if the <code>is_odd</code> method is part of a trait, rather than directly on the struct?</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>std::time::Instant;
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() {
+</span><span>    </span><span style="color:#668f14;">let</span><span> finder </span><span style="color:#72ab00;">=</span><span> OddFinderOne;
+</span><span>
+</span><span>    </span><span style="color:#668f14;">let</span><span> start_time </span><span style="color:#72ab00;">= </span><span>Instant::now();
+</span><span>    </span><span style="color:#668f14;">let</span><span> result </span><span style="color:#72ab00;">= </span><span style="color:#b39f04;">find_nth_odd</span><span>(finder, </span><span style="color:#b3933a;">1_000_000_000</span><span>);
+</span><span>    </span><span style="color:#668f14;">let</span><span> elapsed_time </span><span style="color:#72ab00;">=</span><span> start_time.</span><span style="color:#b39f04;">elapsed</span><span>().</span><span style="color:#b39f04;">as_millis</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> in </span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> ms&quot;</span><span>, result, elapsed_time);
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">find_nth_odd</span><span>(</span><span style="color:#5597d6;">odd_finder</span><span>: OddFinderOne, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">u64 </span><span>{
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> i </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> odd_count </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#72ab00;">while</span><span> odd_count </span><span style="color:#72ab00;">!=</span><span> n {
+</span><span>        i </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        </span><span style="color:#72ab00;">if</span><span> odd_finder.</span><span style="color:#b39f04;">is_odd</span><span>(i) {
+</span><span>            odd_count </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>    i
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">trait </span><span style="color:#c23f31;">OddFinder </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool</span><span>;
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">OddFinderOne</span><span>;
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>OddFinder </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">OddFinderOne </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool </span><span>{
+</span><span>        n </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">2 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">1
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Surprisingly moving this method behind a trait is not a zero cost abstraction, even though the <code>find_nth_odd</code> function still takes the specific <code>OddFinderOne</code> implementation. This version finds the billionth prime in 1340 ms.</p>
+<h2 id="generics">Generics</h2>
+<p>If multiple structs exist which are capable of finding odd numbers, we can use generics to allow our <code>find_nth_odd</code> method to use any of them.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>std::time::Instant;
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() {
+</span><span>    </span><span style="color:#668f14;">let</span><span> finder </span><span style="color:#72ab00;">=</span><span> OddFinderOne;
+</span><span>
+</span><span>    </span><span style="color:#668f14;">let</span><span> start_time </span><span style="color:#72ab00;">= </span><span>Instant::now();
+</span><span>    </span><span style="color:#668f14;">let</span><span> result </span><span style="color:#72ab00;">= </span><span style="color:#b39f04;">find_nth_odd</span><span>(finder, </span><span style="color:#b3933a;">1_000_000_000</span><span>);
+</span><span>    </span><span style="color:#668f14;">let</span><span> elapsed_time </span><span style="color:#72ab00;">=</span><span> start_time.</span><span style="color:#b39f04;">elapsed</span><span>().</span><span style="color:#b39f04;">as_millis</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> in </span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> ms&quot;</span><span>, result, elapsed_time);
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">find_nth_odd</span><span>&lt;T: OddFinder&gt;(</span><span style="color:#5597d6;">odd_finder</span><span>: T, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">u64 </span><span>{
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> i </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> odd_count </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#72ab00;">while</span><span> odd_count </span><span style="color:#72ab00;">!=</span><span> n {
+</span><span>        i </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        </span><span style="color:#72ab00;">if</span><span> odd_finder.</span><span style="color:#b39f04;">is_odd</span><span>(i) {
+</span><span>            odd_count </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>    i
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">trait </span><span style="color:#c23f31;">OddFinder </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool</span><span>;
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">OddFinderOne</span><span>;
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>OddFinder </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">OddFinderOne </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool </span><span>{
+</span><span>        n </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">2 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">1
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">OddFinderTwo</span><span>;
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>OddFinder </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">OddFinderTwo </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">_n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool </span><span>{
+</span><span>        </span><span style="color:#a2a001;">unimplemented!</span><span>()
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>This is another positive example of zero cost abstractions. It runs at essentially the same speed as the initial non-generic trait-based version of the program (above), finding the billionth prime in 1322 ms.</p>
+<h2 id="trait-object">Trait Object</h2>
+<p>Rather than making our <code>find_nth_odd</code> function generic, an alternate approach to allow it to accept any <code>OddFinder</code> implementation is to use trait objects.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>std::time::Instant;
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() {
+</span><span>    </span><span style="color:#668f14;">let</span><span> finder </span><span style="color:#72ab00;">=</span><span> OddFinderOne;
+</span><span>
+</span><span>    </span><span style="color:#668f14;">let</span><span> start_time </span><span style="color:#72ab00;">= </span><span>Instant::now();
+</span><span>    </span><span style="color:#668f14;">let</span><span> result </span><span style="color:#72ab00;">= </span><span style="color:#b39f04;">find_nth_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span>finder, </span><span style="color:#b3933a;">1_000_000_000</span><span>);
+</span><span>    </span><span style="color:#668f14;">let</span><span> elapsed_time </span><span style="color:#72ab00;">=</span><span> start_time.</span><span style="color:#b39f04;">elapsed</span><span>().</span><span style="color:#b39f04;">as_millis</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> in </span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> ms&quot;</span><span>, result, elapsed_time);
+</span><span>}
+</span><span>
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">find_nth_odd</span><span>(</span><span style="color:#5597d6;">odd_finder</span><span>: </span><span style="color:#72ab00;">&amp;</span><span> dyn OddFinder, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">u64 </span><span>{
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> i </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> odd_count </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#72ab00;">while</span><span> odd_count </span><span style="color:#72ab00;">!=</span><span> n {
+</span><span>        i </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        </span><span style="color:#72ab00;">if</span><span> odd_finder.</span><span style="color:#b39f04;">is_odd</span><span>(i) {
+</span><span>            odd_count </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>    i
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">trait </span><span style="color:#c23f31;">OddFinder </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool</span><span>;
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">OddFinderOne</span><span>;
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>OddFinder </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">OddFinderOne </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool </span><span>{
+</span><span>        n </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">2 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">1
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">OddFinderTwo</span><span>;
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>OddFinder </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">OddFinderTwo </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">_n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool </span><span>{
+</span><span>        </span><span style="color:#a2a001;">unimplemented!</span><span>()
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>I expected this to perform worse than the generic implementation, since trait objects should require dynamic dispatch (the program will have to look up the location of the correct <code>is_odd</code> implementation at run time), but it seems the compiler was able to see that <code>finder</code> is always <code>OddFinderOne</code> and perform some additional optimizations, because this calculated the billionth odd number in 1039 ms (average of 5 runs). This is not only better than the generic implementation but it is actually on par with the baseline, which was a very surprising outcome to me.</p>
+<h2 id="boxed-trait-object">Boxed Trait Object</h2>
+<p>The other way to use trait objects is by passing a <code>Box&lt;dyn Trait&gt;</code> (as opposed to <code>&amp; dyn Trait</code> shown above).</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>std::time::Instant;
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() {
+</span><span>    </span><span style="color:#668f14;">let</span><span> finder: </span><span style="color:#a2a001;">Box</span><span>&lt;dyn OddFinder&gt; </span><span style="color:#72ab00;">= </span><span style="color:#a2a001;">Box</span><span>::new(OddFinderOne);
+</span><span>
+</span><span>    </span><span style="color:#668f14;">let</span><span> start_time </span><span style="color:#72ab00;">= </span><span>Instant::now();
+</span><span>    </span><span style="color:#668f14;">let</span><span> result </span><span style="color:#72ab00;">= </span><span style="color:#b39f04;">find_nth_odd</span><span>(finder, </span><span style="color:#b3933a;">1_000_000_000</span><span>);
+</span><span>    </span><span style="color:#668f14;">let</span><span> elapsed_time </span><span style="color:#72ab00;">=</span><span> start_time.</span><span style="color:#b39f04;">elapsed</span><span>().</span><span style="color:#b39f04;">as_millis</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> in </span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> ms&quot;</span><span>, result, elapsed_time);
+</span><span>}
+</span><span>
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">find_nth_odd</span><span>(</span><span style="color:#5597d6;">odd_finder</span><span>: </span><span style="color:#a2a001;">Box</span><span>&lt;dyn OddFinder&gt;, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">u64 </span><span>{
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> i </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> odd_count </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#72ab00;">while</span><span> odd_count </span><span style="color:#72ab00;">!=</span><span> n {
+</span><span>        i </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        </span><span style="color:#72ab00;">if</span><span> odd_finder.</span><span style="color:#b39f04;">is_odd</span><span>(i) {
+</span><span>            odd_count </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>    i
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">trait </span><span style="color:#c23f31;">OddFinder </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool</span><span>;
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">OddFinderOne</span><span>;
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>OddFinder </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">OddFinderOne </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool </span><span>{
+</span><span>        n </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">2 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">1
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">OddFinderTwo</span><span>;
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>OddFinder </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">OddFinderTwo </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">_n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool </span><span>{
+</span><span>        </span><span style="color:#a2a001;">unimplemented!</span><span>()
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>This calculated the billionth odd number in 1314 ms.</p>
+<h2 id="runtime-dynamism">Runtime dynamism</h2>
+<p>To this point we haven't given the compiler any abstraction it couldn't see through at compile time. Even though we had two <code>OddFinder</code> implementations, we were always hard coding the program to use <code>OddFinderOne</code>. We'll change that here, to see what happens when the compiler cannot make this type of optimization.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>std::{env, time::Instant};
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() {
+</span><span>    </span><span style="color:#7f8989;">// I don&#39;t intend to ever set this environment variable. The purpose
+</span><span>    </span><span style="color:#7f8989;">// of this is only to ensure the compiler won&#39;t be able to know
+</span><span>    </span><span style="color:#7f8989;">// which of the two OddFinder implementations we will use.
+</span><span>    </span><span style="color:#668f14;">let</span><span> finder: </span><span style="color:#a2a001;">Box</span><span>&lt;dyn OddFinder&gt; </span><span style="color:#72ab00;">= match </span><span>env::var(</span><span style="color:#d07711;">&quot;USE_FINDER_TWO&quot;</span><span>) {
+</span><span>        </span><span style="color:#a2a001;">Ok</span><span>(use_finder_two) </span><span style="color:#72ab00;">if</span><span> use_finder_two </span><span style="color:#72ab00;">== </span><span style="color:#a2a001;">String</span><span>::from(</span><span style="color:#d07711;">&quot;True&quot;</span><span>)
+</span><span>            </span><span style="color:#72ab00;">=&gt; </span><span style="color:#a2a001;">Box</span><span>::new(OddFinderTwo),
+</span><span>        </span><span style="color:#72ab00;">_ =&gt; </span><span style="color:#a2a001;">Box</span><span>::new(OddFinderOne),
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#668f14;">let</span><span> start_time </span><span style="color:#72ab00;">= </span><span>Instant::now();
+</span><span>    </span><span style="color:#668f14;">let</span><span> result </span><span style="color:#72ab00;">= </span><span style="color:#b39f04;">find_nth_odd</span><span>(finder, </span><span style="color:#b3933a;">1_000_000_000</span><span>);
+</span><span>    </span><span style="color:#668f14;">let</span><span> elapsed_time </span><span style="color:#72ab00;">=</span><span> start_time.</span><span style="color:#b39f04;">elapsed</span><span>().</span><span style="color:#b39f04;">as_millis</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> in </span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> ms&quot;</span><span>, result, elapsed_time);
+</span><span>}
+</span><span>
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">find_nth_odd</span><span>(</span><span style="color:#5597d6;">odd_finder</span><span>: </span><span style="color:#a2a001;">Box</span><span>&lt;dyn OddFinder&gt;, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">u64 </span><span>{
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> i </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> odd_count </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#72ab00;">while</span><span> odd_count </span><span style="color:#72ab00;">!=</span><span> n {
+</span><span>        i </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        </span><span style="color:#72ab00;">if</span><span> odd_finder.</span><span style="color:#b39f04;">is_odd</span><span>(i) {
+</span><span>            odd_count </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>    i
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">trait </span><span style="color:#c23f31;">OddFinder </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool</span><span>;
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">OddFinderOne</span><span>;
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>OddFinder </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">OddFinderOne </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool </span><span>{
+</span><span>        n </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">2 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">1
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">OddFinderTwo</span><span>;
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>OddFinder </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">OddFinderTwo </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">_n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool </span><span>{
+</span><span>        </span><span style="color:#a2a001;">unimplemented!</span><span>()
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>As expected this version is much slower, as we can be sure dynamic dispatch is required here to determine which <code>is_odd</code> function to call, based on whichever <code>OddFinder</code> implementation is being used. This version found the billionth prime in 3424 ms.</p>
+<h2 id="enum">Enum</h2>
+<p>Rather than taking in a trait object, we can modify our <code>find_nth_odd</code> function to take an enum containing any possible <code>OddFinder</code> implementation.</p>
+<pre data-lang="rust" style="background-color:#f5f5f5;color:#1f1f1f;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#72ab00;">use </span><span>std::{env, time::Instant};
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">main</span><span>() {
+</span><span>    </span><span style="color:#7f8989;">// I don&#39;t intend to ever set this environment variable. The purpose
+</span><span>    </span><span style="color:#7f8989;">// of this is only to ensure the compiler won&#39;t be able to know
+</span><span>    </span><span style="color:#7f8989;">// which of the two OddFinder implementations we will use.
+</span><span>    </span><span style="color:#668f14;">let</span><span> finder: OddFinders </span><span style="color:#72ab00;">= match </span><span>env::var(</span><span style="color:#d07711;">&quot;USE_FINDER_TWO&quot;</span><span>) {
+</span><span>        </span><span style="color:#a2a001;">Ok</span><span>(use_finder_two) </span><span style="color:#72ab00;">if</span><span> use_finder_two </span><span style="color:#72ab00;">== </span><span style="color:#a2a001;">String</span><span>::from(</span><span style="color:#d07711;">&quot;True&quot;</span><span>)
+</span><span>            </span><span style="color:#72ab00;">=&gt; </span><span>OddFinders::Two(OddFinderTwo),
+</span><span>        </span><span style="color:#72ab00;">_ =&gt; </span><span>OddFinders::One(OddFinderOne),
+</span><span>    };
+</span><span>
+</span><span>    </span><span style="color:#668f14;">let</span><span> start_time </span><span style="color:#72ab00;">= </span><span>Instant::now();
+</span><span>    </span><span style="color:#668f14;">let</span><span> result </span><span style="color:#72ab00;">= </span><span style="color:#b39f04;">find_nth_odd</span><span>(finder, </span><span style="color:#b3933a;">1_000_000_000</span><span>);
+</span><span>    </span><span style="color:#668f14;">let</span><span> elapsed_time </span><span style="color:#72ab00;">=</span><span> start_time.</span><span style="color:#b39f04;">elapsed</span><span>().</span><span style="color:#b39f04;">as_millis</span><span>();
+</span><span>
+</span><span>    </span><span style="color:#a2a001;">println!</span><span>(</span><span style="color:#d07711;">&quot;</span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> in </span><span style="color:#aeb52b;">{}</span><span style="color:#d07711;"> ms&quot;</span><span>, result, elapsed_time);
+</span><span>}
+</span><span>
+</span><span>
+</span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">find_nth_odd</span><span>(</span><span style="color:#5597d6;">odd_finder</span><span>: OddFinders, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">u64 </span><span>{
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> i </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>    </span><span style="color:#668f14;">let mut</span><span> odd_count </span><span style="color:#72ab00;">= </span><span style="color:#b3933a;">0</span><span>;
+</span><span>
+</span><span>    </span><span style="color:#72ab00;">while</span><span> odd_count </span><span style="color:#72ab00;">!=</span><span> n {
+</span><span>        i </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        </span><span style="color:#72ab00;">if</span><span> odd_finder.</span><span style="color:#b39f04;">is_odd</span><span>(i) {
+</span><span>            odd_count </span><span style="color:#72ab00;">+= </span><span style="color:#b3933a;">1</span><span>;
+</span><span>        }
+</span><span>    }
+</span><span>
+</span><span>    i
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">trait </span><span style="color:#c23f31;">OddFinder </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool</span><span>;
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">OddFinderOne</span><span>;
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>OddFinder </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">OddFinderOne </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool </span><span>{
+</span><span>        n </span><span style="color:#72ab00;">% </span><span style="color:#b3933a;">2 </span><span style="color:#72ab00;">== </span><span style="color:#b3933a;">1
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">struct </span><span style="color:#c23f31;">OddFinderTwo</span><span>;
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>OddFinder </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">OddFinderTwo </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">_n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool </span><span>{
+</span><span>        </span><span style="color:#a2a001;">unimplemented!</span><span>()
+</span><span>    }
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">enum </span><span style="color:#c23f31;">OddFinders </span><span>{
+</span><span>    One(OddFinderOne),
+</span><span>    Two(OddFinderTwo),
+</span><span>}
+</span><span>
+</span><span style="color:#668f14;">impl </span><span>OddFinder </span><span style="color:#72ab00;">for </span><span style="color:#c23f31;">OddFinders </span><span>{
+</span><span>    </span><span style="color:#668f14;">fn </span><span style="color:#c23f31;">is_odd</span><span>(</span><span style="color:#72ab00;">&amp;</span><span style="color:#5597d6;">self</span><span>, </span><span style="color:#5597d6;">n</span><span>: </span><span style="color:#668f14;">u64</span><span>) -&gt; </span><span style="color:#668f14;">bool </span><span>{
+</span><span>        </span><span style="color:#72ab00;">match </span><span style="color:#5597d6;">self </span><span>{
+</span><span>            OddFinders::One(finder) </span><span style="color:#72ab00;">=&gt;</span><span> finder.</span><span style="color:#b39f04;">is_odd</span><span>(n),
+</span><span>            OddFinders::Two(finder) </span><span style="color:#72ab00;">=&gt;</span><span> finder.</span><span style="color:#b39f04;">is_odd</span><span>(n),
+</span><span>        }
+</span><span>    }
+</span><span>}
+</span></code></pre>
+<p>Relative to the boxed trait object, here we are trading dynamic dispatch for a runtime enum match statement. This turns out to be a big performance win, allowing this version to find the billionth prime in 1366 ms.</p>
+<h2 id="inline-never">Inline never</h2>
+<p>For fun, I re-ran the baseline with <code>#[inline(never)]</code> on the <code>is_odd</code> function. This increased the time required to calculate the billionth odd number to 3378 ms.</p>
+<h2 id="conclusion">Conclusion</h2>
+<p>Making performance predications in the presence of an optimizing compiler is difficult. Extrapolating performance results for one workload to predict the performance against a different workload is also challenging.</p>
+<p>Those disclaimers aside I think there are some interesting findings here. The first is that moving a method behind a trait increases the runtime cost, even when called directly on the struct (as opposed to through a trait object). The second is that, at least in this benchmark, creating an enum of all possible trait implementors and passing that into a function is significantly (roughly 3x here) faster than using a boxed trait object.</p>
+<p>All code is available <a href="https://github.com/JoshMcguigan/cost-of-indirection">here</a>. If you discover issues with any of these benchmarks feel free to open issues/pull requests on GitHub.</p>
+<h4 id="update-1">Update #1</h4>
+<p>Reddit user boscop <a href="https://www.reddit.com/r/rust/comments/fbev13/the_cost_of_indirection/fj42x2n?utm_source=share&amp;utm_medium=web2x">suggested I repeat the trait object test using <code>std::hint::blackbox</code></a>. This has an effect which is similar to the environment variable check in the boxed trait test, and with the black box the <code>&amp; dyn OddFinder</code> performs similarly to the <code>Box&lt;dyn OddFinder&gt;</code>, finding the billionth prime in 3243 ms.</p>
+<h4 id="update-2">Update #2</h4>
+<p>Reddit user Shnatsel <a href="https://www.reddit.com/r/rust/comments/fbev13/the_cost_of_indirection/fj43llt?utm_source=share&amp;utm_medium=web2x">suggested I submit a bug report against the Rust compiler</a>, based on the result of the benchmark that <a href="https://github.com/JoshMcguigan/cost-of-indirection/blob/master/src/bin/trait.rs">moved the <code>is_odd</code> method onto a trait, while <code>find_nth_odd</code> still took a concrete struct as an arg</a>. I've created that bug report in the form of <a href="https://github.com/rust-lang/rust/issues/69593">an issue with the bug tag on the main rust-lang repo</a>.</p>
+
+
+        </div>
+    </section>
+</body>
+
+</html>
